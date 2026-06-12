@@ -1,0 +1,32 @@
+[
+  {
+    "id": "paint-shop-detail",
+    "html_fixture": "eventbrite-detail-paint-shop.html",
+    "expected": {
+      "name": "FREE PAINT AND SHOP",
+      "date": "2026-06-06",
+      "address_contains": "839 Broadway",
+      "price": "Free",
+      "description_contains": "paint for free"
+    }
+  },
+  {
+    "id": "paint-shop-api",
+    "api_fixture": "eventbrite-api-response.json",
+    "event_index": 0,
+    "expected": {
+      "name": "FREE PAINT AND SHOP",
+      "date": "2026-06-06",
+      "address_contains": "839 Broadway",
+      "price": "Free"
+    }
+  },
+  {
+    "id": "listing-jsonld",
+    "html_fixture": "eventbrite-listing.html",
+    "expected": {
+      "min_events": 1,
+      "name_contains": "Food Festival"
+    }
+  }
+]

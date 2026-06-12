@@ -1,0 +1,28 @@
+{
+  "name": "hyperlocal-event-aggregator",
+  "version": "1.0.0",
+  "description": "WhatsUpNYC — hyperlocal NYC events (scrapers, API, React map)",
+  "main": "backend/server.js",
+  "scripts": {
+    "dev": "concurrently -k \"npm run server\" \"npx --yes wait-on http://127.0.0.1:8000/api/health -t 60000 && npm run client\"",
+    "server": "cd backend && npm run dev",
+    "client": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "verify": "cd backend && npm run verify:release",
+    "ingest": "cd backend && npm run ingest"
+  },
+  "keywords": [
+    "events",
+    "nyc",
+    "new-york",
+    "scraping",
+    "ai",
+    "mapping"
+  ],
+  "author": "Jayden Lam",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

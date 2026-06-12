@@ -1,0 +1,32 @@
+{
+  "trueDuplicates": [
+    [
+      {
+        "name": "Brooklyn Jazz Night",
+        "date": "2099-06-15",
+        "address": "Brooklyn, NY",
+        "website": "https://example.com/jazz"
+      },
+      {
+        "name": "Brooklyn Jazz Night!",
+        "date": "2099-06-15",
+        "address": "Brooklyn, NY",
+        "website": "https://example.com/jazz"
+      }
+    ]
+  ],
+  "nearMisses": [
+    [
+      {
+        "name": "Brooklyn Jazz Night",
+        "date": "2099-06-15",
+        "address": "Brooklyn, NY"
+      },
+      {
+        "name": "Manhattan Art Walk",
+        "date": "2099-06-16",
+        "address": "Manhattan, NY"
+      }
+    ]
+  ]
+}

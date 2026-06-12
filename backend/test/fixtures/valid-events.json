@@ -1,0 +1,30 @@
+[
+  {
+    "id": "fixture_music_abc",
+    "name": "Brooklyn Jazz Night",
+    "description": "Live jazz at a local venue in Brooklyn",
+    "address": "Brooklyn, NY",
+    "date": "2099-06-15",
+    "startTime": "8:00 PM",
+    "price": "$20",
+    "category": "Music",
+    "latitude": 40.6782,
+    "longitude": -73.9442,
+    "website": "https://example.com/jazz",
+    "source": "fixture"
+  },
+  {
+    "id": "fixture_art_def",
+    "name": "Gallery Opening Night",
+    "description": "New exhibition opening in Manhattan",
+    "address": "Manhattan, NY",
+    "date": "2099-07-01",
+    "startTime": "6:00 PM",
+    "price": "Free",
+    "category": "Art",
+    "latitude": 40.758,
+    "longitude": -73.9855,
+    "website": null,
+    "source": "fixture"
+  }
+]

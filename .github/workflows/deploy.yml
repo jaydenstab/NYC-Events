@@ -1,0 +1,67 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      push_images:
+        description: 'Push images to GHCR'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-images:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: github.event.inputs.push_images != 'false'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.api
+          push: ${{ github.event.inputs.push_images != 'false' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/whatsupnyc-api:latest
+            whatsupnyc-api:local
+
+      - name: Build Worker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.worker
+          push: ${{ github.event.inputs.push_images != 'false' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/whatsupnyc-worker:latest
+            whatsupnyc-worker:local
+
+      - name: Deploy notes
+        run: |
+          echo "Images built. For Railway/Fly/ECS:"
+          echo "  - Set DATABASE_URL, REDIS_URL, API_KEYS, METRICS_TOKEN, MAPBOX_ACCESS_TOKEN"
+          echo "  - Run worker service with Dockerfile.worker"
+          echo "  - Never set SYNC_INGEST=true in production"
+          echo "  - Frontend build: VITE_API_KEY matching API_KEYS"
+          echo ""
+          echo "Post-deploy health check:"
+          echo "  curl -s https://YOUR_HOST/api/health | jq .status"

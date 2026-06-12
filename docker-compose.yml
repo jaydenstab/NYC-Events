@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: whatsupnyc
+      POSTGRES_PASSWORD: whatsupnyc
+      POSTGRES_DB: whatsupnyc
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U whatsupnyc -d whatsupnyc']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    profiles:
+      - prod
+    ports:
+      - '8000:8000'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://whatsupnyc:whatsupnyc@postgres:5432/whatsupnyc
+      - REDIS_URL=redis://redis:6379
+      - SCRAPER_CONCURRENCY=1
+      - AI_WORKER_POOL_SIZE=1
+      - USE_LOCAL_AI=false
+      - SCRAPER_NYC_PARKS_ENABLED=false
+      - SCRAPER_NYC_GO_ENABLED=false
+      - SCRAPER_UNION_SQUARE_ENABLED=false
+      - SKIP_GEOCODE=false
+      - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN:-}
+      - API_KEYS=${API_KEYS:-changeme}
+      - METRICS_TOKEN=${METRICS_TOKEN:-changeme}
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+    command: ['node', '--max-old-space-size=768', 'worker.js']
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+        reservations:
+          memory: 512M
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://whatsupnyc:whatsupnyc@postgres:5432/whatsupnyc
+      - REDIS_URL=redis://redis:6379
+      - SCRAPER_CONCURRENCY=1
+      - AI_WORKER_POOL_SIZE=1
+      - USE_LOCAL_AI=false
+      - SCRAPER_NYC_PARKS_ENABLED=false
+      - SCRAPER_NYC_GO_ENABLED=false
+      - SCRAPER_UNION_SQUARE_ENABLED=false
+      - WORKER_CONCURRENCY=2
+      - MAPBOX_ACCESS_TOKEN=${MAPBOX_ACCESS_TOKEN:-}
+      - API_KEYS=${API_KEYS:-changeme}
+    profiles:
+      - prod
+
+volumes:
+  pgdata:

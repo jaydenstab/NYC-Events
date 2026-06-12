@@ -1,0 +1,23 @@
+[
+  {
+    "query": "jazz brooklyn",
+    "relevantEventIds": [],
+    "notes": "Populate event ids from live DB after ingest; empty = skipped in strict mode"
+  },
+  {
+    "query": "free comedy",
+    "relevantEventIds": []
+  },
+  {
+    "query": "art gallery manhattan",
+    "relevantEventIds": []
+  },
+  {
+    "query": "live music tonight",
+    "relevantEventIds": []
+  },
+  {
+    "query": "food festival",
+    "relevantEventIds": []
+  }
+]

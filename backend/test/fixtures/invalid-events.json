@@ -1,0 +1,30 @@
+[
+  {
+    "name": "TBD",
+    "address": "NYC",
+    "date": "2099-01-01",
+    "startTime": "7pm",
+    "category": "Music"
+  },
+  {
+    "name": "Things to do in NYC this weekend",
+    "address": "New York, NY",
+    "date": "2099-01-02",
+    "startTime": "TBD",
+    "category": "Other"
+  },
+  {
+    "name": "Featured Shows",
+    "address": "Brooklyn, NY",
+    "date": "2099-03-01",
+    "startTime": "8pm",
+    "category": "Music"
+  },
+  {
+    "name": "nyc.gov Event Calendar",
+    "address": "Manhattan, NY",
+    "date": "Date",
+    "startTime": "TBD",
+    "category": "Community"
+  }
+]

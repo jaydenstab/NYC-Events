@@ -1,0 +1,32 @@
+{
+  "events": [
+    {
+      "name": "FREE PAINT AND SHOP",
+      "start_date": "2026-06-06T01:00:00-04:00",
+      "url": "https://www.eventbrite.com/e/free-paint-and-shop-tickets-1989710502675",
+      "summary": "Come hang out, paint for free, and shop cool stuff all in one fun, chill day!",
+      "is_free": true,
+      "primary_venue": {
+        "name": "839 Broadway",
+        "address": {
+          "address_1": "839 Broadway",
+          "city": "Brooklyn",
+          "region": "NY",
+          "postal_code": "11206",
+          "localized_address_display": "839 Broadway, Brooklyn, NY 11206"
+        }
+      }
+    },
+    {
+      "name": "Brooklyn Street Food Fair",
+      "start_date": "2026-06-20T12:00:00-04:00",
+      "url": "https://www.eventbrite.com/e/brooklyn-street-food-fair-tickets-987654321",
+      "is_free": true,
+      "primary_venue": {
+        "address": {
+          "localized_address_display": "Williamsburg, Brooklyn, NY"
+        }
+      }
+    }
+  ]
+}

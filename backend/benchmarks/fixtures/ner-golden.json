@@ -1,0 +1,26 @@
+[
+  {
+    "text": "Brooklyn Jazz Night at Blue Note\nFriday March 15 8:00 PM\n123 Main St Brooklyn NY\n$25",
+    "expected": {
+      "date": "2026-03-15",
+      "address": "123 Main St Brooklyn",
+      "startTime": "8:00 PM"
+    }
+  },
+  {
+    "text": "Free Comedy Show @ The Creek\nSaturday April 2 7:30 PM\n45 Delancey St New York NY",
+    "expected": {
+      "date": "2026-04-02",
+      "address": "45 Delancey St",
+      "startTime": "7:30 PM"
+    }
+  },
+  {
+    "text": "Gallery Opening at MoMA\nJune 10 6pm\n11 W 53rd St",
+    "expected": {
+      "date": "2026-06-10",
+      "address": "11 W 53rd St",
+      "startTime": "6:00 PM"
+    }
+  }
+]

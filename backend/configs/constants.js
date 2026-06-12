@@ -1,0 +1,26 @@
+module.exports = {
+  SCRAPER_HEALTH_STREAK_THRESHOLD: parseInt(
+    process.env.SCRAPER_ZERO_STREAK_THRESHOLD || process.env.SCRAPER_HEALTH_STREAK_THRESHOLD || '3',
+    10
+  ),
+  CACHE_TTL_SECONDS: parseInt(process.env.CACHE_TTL_SECONDS || '300', 10),
+  DEDUPE_SIMILARITY_THRESHOLD: parseFloat(
+    process.env.DEDUPE_SIMILARITY_THRESHOLD || '0.85'
+  ),
+  SMOKE_MIN_EVENTS: parseInt(process.env.SMOKE_MIN_EVENTS || '15', 10),
+  SEARCH_MAX_QUERY_LENGTH: parseInt(process.env.SEARCH_MAX_QUERY_LENGTH || '200', 10),
+  BROWSER_PAGE_TIMEOUT_MS: parseInt(process.env.BROWSER_PAGE_TIMEOUT_MS || '30000', 10),
+  BROWSER_SCRAPER_TIMEOUT_MS: parseInt(process.env.BROWSER_SCRAPER_TIMEOUT_MS || '60000', 10),
+  BROWSER_MAX_CONCURRENT_PAGES: parseInt(process.env.BROWSER_MAX_CONCURRENT_PAGES || '2', 10),
+  BROWSER_MAX_RSS_MB: parseInt(process.env.BROWSER_MAX_RSS_MB || '900', 10),
+  PG_POOL_MAX: parseInt(process.env.PG_POOL_MAX || '20', 10),
+  RATE_LIMIT_EVENTS_PER_MIN: parseInt(process.env.RATE_LIMIT_EVENTS_PER_MIN || '60', 10),
+  RATE_LIMIT_SEMANTIC_PER_MIN: parseInt(process.env.RATE_LIMIT_SEMANTIC_PER_MIN || '20', 10),
+  EVENTS_CACHE_TTL_MS:
+    parseInt(process.env.EVENTS_CACHE_TTL_MS, 10) ||
+    parseInt(process.env.CACHE_TTL_SECONDS || '300', 10) * 1000,
+  GEOCODE_CHUNK_SIZE: parseInt(process.env.GEOCODE_CHUNK_SIZE || '10', 10),
+  SAVE_EVENTS_CHUNK_SIZE: parseInt(process.env.SAVE_EVENTS_CHUNK_SIZE || '50', 10),
+  STAGING_RETENTION_DAYS: parseInt(process.env.STAGING_RETENTION_DAYS || '7', 10),
+  WORKER_SHUTDOWN_TIMEOUT_MS: parseInt(process.env.WORKER_SHUTDOWN_TIMEOUT_MS || '120000', 10),
+};
