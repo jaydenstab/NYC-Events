@@ -81,7 +81,7 @@ docker build -f Dockerfile.api \
    curl -s -H "x-api-key: YOUR_PUBLIC_KEY" "https://YOUR_HOST/api/events?page=1" | jq '.meta.totalCount'
    ```
 
-5. Add live URL to [README.md](../README.md).
+5. Add live URL to [README.md](../README.md) (replace the Railway deploy placeholder under **Live demo**).
 
 ## 5. Scheduled ingest (optional)
 
@@ -97,6 +97,7 @@ Schedule: daily or every 6 hours.
 
 | Issue | Fix |
 |-------|-----|
+| CI failed on frontend lint | Run `cd frontend && npm run lint` locally; fix before push |
 | Empty map / 401 on events | Rebuild API with correct `VITE_API_KEY` matching `API_KEYS` |
 | No events | Run ingest on worker; check `/health` `eventCount` |
 | Semantic search slow first query | Vector model warmup; check `/ready` |

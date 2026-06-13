@@ -26,7 +26,8 @@ run(backendDir, 'npm', ['run', 'verify:ingest']);
 console.log('=== verify-release: data quality audit ===');
 run(backendDir, 'npm', ['run', 'audit:quality']);
 
-console.log('=== verify-release: frontend test + build ===');
+console.log('=== verify-release: frontend lint + test + build ===');
+run(path.join(rootDir, 'frontend'), 'npm', ['run', 'lint']);
 run(path.join(rootDir, 'frontend'), 'npm', ['run', 'test', '--', '--run']);
 run(path.join(rootDir, 'frontend'), 'npm', ['run', 'build']);
 

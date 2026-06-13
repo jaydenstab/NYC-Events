@@ -10,8 +10,10 @@ Agents and humans use the same bar. "Works on my machine" without these commands
 
 ```bash
 cd backend && npm run test:unit
-cd ../frontend && npm run test -- --run && npm run build
+cd ../frontend && npm run lint && npm run test -- --run && npm run build
 ```
+
+Frontend lint is required by CI (`.github/workflows/ci.yml`).
 
 ### 2. Production-profile ingest + smoke
 
@@ -41,13 +43,13 @@ curl -s http://localhost:8000/api/health | jq '{ ok, status, eventCount, degrade
 
 Expect: `ok: true`, `status: "OK"`, `eventCount >= SMOKE_MIN_EVENTS`, `degradedSources: []`.
 
-### 4. One-command gate (backend)
+### 4. One-command gate (recommended)
 
 ```bash
 cd backend && npm run verify:release
 ```
 
-Runs `test:unit` + `verify:ingest` + `audit:quality` (does not start the dev server).
+Runs `test:unit` + `verify:ingest` + `audit:quality` + frontend **lint** + test + build. Same as `npm run verify` from the repo root.
 
 ## Optional / nightly
 
@@ -62,9 +64,9 @@ cd backend && npm run verify:scrapers
 
 | Allowed before gate | Blocked before gate |
 |---------------------|---------------------|
-| Local edits, `npm run dev` | `git push` |
-| `git diff`, feature branches | `gh pr merge` |
-| WIP commits on private branch (if you must) | Declaring "done" or updating vault "shipped" |
+| Local edits, `npm run dev` | Declaring "done" or tagging a release |
+| `git diff`, feature branches | Merging without green `verify:release` |
+| WIP commits on private branch (if you must) | |
 
 After all steps pass: commit in focused PRs, then push.
 

@@ -64,6 +64,13 @@ cd backend && npm run audit:quality
 
 Omit `-H 'x-api-key: …'` in local dev when `API_KEYS` is unset in `backend/.env`.
 
+## Frontend
+
+- **Tabs:** Discover, Saved, Profile (bottom nav on mobile; embedded tabs in desktop sidebar)
+- **URL state:** `?event=` deep links, `when=` for Tonight / This weekend, filters in query params
+- **Saved events:** localStorage IDs + server hydration via `GET /api/events?ids=` when IDs are missing from the loaded catalog
+- **Themes:** App light/dark under Profile → App appearance (separate from map appearance)
+
 ## Event sources
 
 | Source | Default ingest | Status |
@@ -128,17 +135,21 @@ Label search golden set: `npm run label:search-golden` → edit `benchmarks/fixt
 
 ## Development
 
-Before opening a PR or tagging a release, run from the repo root:
+Before opening a PR or tagging a release:
 
 ```bash
 npm run verify
 ```
 
-Full checklist: [SHIP_GATE.md](../SHIP_GATE.md).
+From the repo root, `npm run verify` runs `backend verify:release`: unit tests, production-profile ingest smoke, data quality audit, and frontend lint + test + build (matches CI).
+
+Fast checks without ingest smoke:
 
 ```bash
 cd backend && npm run test:unit && npm run test:api
 cd frontend && npm run lint && npm test && npm run build
 ```
+
+Full checklist: [SHIP_GATE.md](../SHIP_GATE.md).
 
 Optional: `cd backend && npm run test:property`, `npm run typecheck`, `npm run bench:dedupe`, `npm run bench:ingest`.

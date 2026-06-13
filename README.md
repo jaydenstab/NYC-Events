@@ -9,7 +9,7 @@ Hyperlocal event discovery for New York City — multi-source scrapers, validati
 
 ![WhatsUpNYC map UI (light)](docs/screenshot-light.png)
 
-_Screenshots: capture at 1280×800 with `frontend/.env.local` (`VITE_MAPBOX_TOKEN`). Dark is default; light theme under Profile → App appearance._
+_Screenshots: capture at 1280×800 with `frontend/.env.local` (`VITE_MAPBOX_ACCESS_TOKEN`). Dark is default; light theme under Profile → App appearance._
 
 **Live demo:** Deploy via [Railway](docs/DEPLOY_RAILWAY.md) — set your URL in this README after first deploy.
 
@@ -22,6 +22,9 @@ _Screenshots: capture at 1280×800 with `frontend/.env.local` (`VITE_MAPBOX_TOKE
 - Multi-source ingest pipeline with validation, dedupe, and geocoding
 - Hybrid search — keyword FTS plus semantic vectors (reciprocal rank fusion)
 - Mapbox 3D map with pin clustering, saved events, and semantic search UI
+- Shareable event links (`?event=`) with deep-link hydration and PNG OG cards
+- Tonight / This weekend discovery shortcuts with URL state (`when=`)
+- Mobile bottom nav, desktop collapsible sidebar, Profile panel; app light/dark theme
 - Split API / worker architecture with CI and release ship gate
 
 ## Architecture
@@ -90,6 +93,25 @@ curl -s http://localhost:8000/api/health | jq '{ status, eventCount }'
 ```
 
 Without ingest, the UI may show demo fallback events. Full setup (env tables, API, Docker): [docs/SETUP.md](docs/SETUP.md).
+
+## Development
+
+Fast checks (matches CI frontend job):
+
+```bash
+cd backend && npm run test:unit
+cd ../frontend && npm run lint && npm test && npm run build
+```
+
+Full release bar (ingest smoke + frontend lint/test/build):
+
+```bash
+cd backend && npm run verify:release
+# or from repo root:
+npm run verify
+```
+
+See [SHIP_GATE.md](SHIP_GATE.md) for the full checklist.
 
 ## Documentation
 

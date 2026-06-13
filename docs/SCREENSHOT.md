@@ -1,14 +1,19 @@
-# App screenshot
+# Screenshots
 
-Capture a screenshot of the 3D map UI after running ingest:
+Assets linked from [README.md](../README.md):
+
+- `docs/screenshot.png` — dark theme (default)
+- `docs/screenshot-light.png` — light theme
+
+## Capture
 
 ```bash
 npm run dev
 # open http://localhost:3000
 ```
 
-Save as `docs/screenshot.png`, then add a short **Screenshot** section near the top of [README.md](../README.md):
+Use viewport **1280×800**. Set `VITE_MAPBOX_ACCESS_TOKEN` in `frontend/.env.local`.
 
-```markdown
-![WhatsUpNYC map UI](docs/screenshot.png)
-```
+For the light screenshot: Profile → App appearance → Light, then capture again.
+
+After UI changes, re-capture both assets and commit.
