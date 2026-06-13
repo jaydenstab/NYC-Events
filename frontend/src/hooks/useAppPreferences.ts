@@ -48,7 +48,7 @@ function migrateLegacyMapAppearance(parsed: Record<string, unknown>): MapAppeara
 
 function load(): AppPreferences {
   try {
-    let raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
       if (legacy) {
