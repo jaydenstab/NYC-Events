@@ -22,6 +22,13 @@ interface FilterSheetProps {
   savedMode?: boolean;
   selectedTimeOfDay: TimeOfDayFilter;
   onTimeOfDayChange: (time: TimeOfDayFilter) => void;
+  hideTrigger?: boolean;
+  selectedDateRange?: string;
+  onDateRangeChange?: (range: string) => void;
+  selectedPrice?: import('@/lib/price').PriceFilter;
+  onPriceChange?: (price: import('@/lib/price').PriceFilter) => void;
+  onNearMe?: () => void;
+  nearMeActive?: boolean;
 }
 
 const TIME_OPTIONS: { value: TimeOfDayFilter; label: string }[] = [
@@ -46,28 +53,52 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
   savedMode = false,
   selectedTimeOfDay,
   onTimeOfDayChange,
+  hideTrigger = false,
+  selectedDateRange = 'all',
+  onDateRangeChange,
+  selectedPrice = 'all',
+  onPriceChange,
+  onNearMe,
+  nearMeActive = false,
 }) => {
+  const dateChip = (range: string, label: string) => (
+    <button
+      key={range}
+      type="button"
+      onClick={() => onDateRangeChange?.(selectedDateRange === range ? 'all' : range)}
+      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+        selectedDateRange === range
+          ? 'border-primary bg-primary/10 text-primary'
+          : 'border-border bg-muted/50 text-muted-foreground'
+      }`}
+    >
+      {label}
+    </button>
+  );
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => onOpenChange(true)}
-        aria-label={`Filters${activeCount > 0 ? `, ${activeCount} active` : ''}`}
-        className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-muted/50 hover:bg-muted"
-      >
-        <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
-        Filters
-        {activeCount > 0 && (
-          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
-            {activeCount}
-          </span>
-        )}
-      </button>
+      {!hideTrigger && (
+        <button
+          type="button"
+          onClick={() => onOpenChange(true)}
+          aria-label={`Filters${activeCount > 0 ? `, ${activeCount} active` : ''}`}
+          className="relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-border bg-muted/50 hover:bg-muted"
+        >
+          <SlidersHorizontal className="w-3.5 h-3.5" aria-hidden />
+          Filters
+          {activeCount > 0 && (
+            <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+              {activeCount}
+            </span>
+          )}
+        </button>
+      )}
 
       <Drawer.Root open={open} onOpenChange={onOpenChange}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 z-[1100]" />
-          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[1101] max-h-[85vh] flex flex-col rounded-t-3xl bg-card border border-border pb-[env(safe-area-inset-bottom)]">
+          <Drawer.Content className="fixed bottom-0 left-0 right-0 z-[1101] max-h-[85vh] flex flex-col rounded-t-3xl bg-surface-elevated border border-border pb-[env(safe-area-inset-bottom)]">
             <Drawer.Handle className="mx-auto mt-3 mb-2 shrink-0" />
             <Drawer.Title className="sr-only">Filters</Drawer.Title>
             <Drawer.Description className="sr-only">
@@ -85,15 +116,58 @@ const FilterSheet: React.FC<FilterSheetProps> = ({
                 Done
               </button>
             </div>
-            <div className="overflow-y-auto flex-1 min-h-0 pb-6">
+            <div className="overflow-y-auto flex-1 min-h-0 pb-6 px-5">
               <SortControl
                 value={sort}
                 onChange={onSortChange}
                 hasSearchQuery={hasSearchQuery}
                 hasUserLocation={hasUserLocation}
                 compact
+                className="!px-0 pb-3"
               />
-              <div className="px-5 pb-3">
+              {onDateRangeChange && (
+                <div className="pb-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">When</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {dateChip('tomorrow', 'Tomorrow')}
+                    {dateChip('week', 'This week')}
+                  </div>
+                </div>
+              )}
+              {onPriceChange && (
+                <div className="pb-3">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Price</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => onPriceChange(selectedPrice === 'free' ? 'all' : 'free')}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                        selectedPrice === 'free'
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-muted/50 text-muted-foreground'
+                      }`}
+                    >
+                      Free
+                    </button>
+                  </div>
+                </div>
+              )}
+              {onNearMe && (
+                <div className="pb-3">
+                  <button
+                    type="button"
+                    onClick={onNearMe}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border ${
+                      nearMeActive
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-muted/50 text-muted-foreground'
+                    }`}
+                  >
+                    Near me
+                  </button>
+                </div>
+              )}
+              <div className="pb-3">
                 <p className="text-xs font-medium text-muted-foreground mb-2">Time of day</p>
                 <div className="flex flex-wrap gap-1.5">
                   {TIME_OPTIONS.map((opt) => (

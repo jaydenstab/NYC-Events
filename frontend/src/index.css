@@ -10,8 +10,8 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 84% 4.9%;
     --muted: 210 40% 96%;
@@ -22,7 +22,7 @@
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 221.2 83.2% 53.3%;
+    --ring: 24.6 95% 53.1%;
     --radius: 0.5rem;
     --radius-card: 12px;
     --radius-panel: 16px;
@@ -33,25 +33,25 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --background: 0 0% 8%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 13%;
+    --card-foreground: 0 0% 98%;
+    --popover: 0 0% 13%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 24.6 95% 53.1%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 0 0% 16%;
+    --muted-foreground: 0 0% 55%;
+    --accent: 0 0% 16%;
+    --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 18%;
+    --input: 0 0% 18%;
+    --ring: 24.6 95% 53.1%;
   }
 }
 
@@ -84,13 +84,19 @@ body {
   height: 100vh;
 }
 
-/* Full-viewport app shell (works even if Tailwind utilities fail to load) */
+/* Full-viewport app shell — uses theme tokens from .app-theme-* on parent */
 .app-shell {
   width: 100vw;
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background: #1a1a1a;
+  background: hsl(var(--surface, 0 0% 8%));
+}
+
+.map-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
 }
 
 .map-root {
@@ -209,11 +215,129 @@ button:focus-visible {
 @keyframes eventHighlightPulse {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35);
+    box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.35);
   }
   50% {
-    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.12);
+    box-shadow: 0 0 0 6px rgba(249, 115, 22, 0.12);
   }
+}
+
+/* App theme — dark (default mock)
+ * App UI: surface / surface-elevated / primary / border
+ * Map chrome: surface-elevated tokens (matches sidebar palette; MapControlBar, MapLegend)
+ * Map pins: #F97316 in mapLayers.ts (matches --primary)
+ */
+.app-theme-dark {
+  --sidebar-bg: 0 0% 8%;
+  --sidebar-surface: 0 0% 13%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-muted: 0 0% 55%;
+  --surface: var(--sidebar-bg);
+  --surface-elevated: var(--sidebar-surface);
+  --overlay: 0 0% 6%;
+  --overlay-scrim: 0 0% 0% / 0.6;
+  --status-warning: 32 95% 44%;
+  --status-warning-bg: 38 92% 50% / 0.12;
+  --status-success: 142 71% 45%;
+  --status-success-bg: 142 71% 45% / 0.12;
+  --background: var(--sidebar-bg);
+  --foreground: var(--sidebar-foreground);
+  --card: var(--sidebar-surface);
+  --card-foreground: var(--sidebar-foreground);
+  --popover: var(--sidebar-surface);
+  --popover-foreground: var(--sidebar-foreground);
+  --muted: 0 0% 16%;
+  --muted-foreground: var(--sidebar-muted);
+  --border: var(--sidebar-border);
+  --input: var(--sidebar-border);
+  --primary: 24.6 95% 53.1%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 24.6 95% 53.1%;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+/* App theme — light */
+.app-theme-light {
+  --sidebar-bg: 0 0% 98%;
+  --sidebar-surface: 0 0% 100%;
+  --sidebar-border: 214.3 31.8% 88%;
+  --sidebar-foreground: 222.2 84% 4.9%;
+  --sidebar-muted: 215.4 16.3% 46.9%;
+  --surface: var(--sidebar-bg);
+  --surface-elevated: var(--sidebar-surface);
+  --overlay: 0 0% 100%;
+  --overlay-scrim: 0 0% 0% / 0.4;
+  --status-warning: 32 95% 44%;
+  --status-warning-bg: 38 92% 50% / 0.15;
+  --status-success: 142 71% 35%;
+  --status-success-bg: 142 71% 45% / 0.12;
+  --background: var(--sidebar-bg);
+  --foreground: var(--sidebar-foreground);
+  --card: var(--sidebar-surface);
+  --card-foreground: var(--sidebar-foreground);
+  --popover: var(--sidebar-surface);
+  --popover-foreground: var(--sidebar-foreground);
+  --muted: 210 40% 96%;
+  --muted-foreground: var(--sidebar-muted);
+  --border: var(--sidebar-border);
+  --input: var(--sidebar-border);
+  --primary: 24.6 95% 53.1%;
+  --primary-foreground: 0 0% 100%;
+  --ring: 24.6 95% 53.1%;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+.app-theme-dark ::-webkit-scrollbar-track,
+.sidebar-dark ::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-theme-dark ::-webkit-scrollbar-thumb,
+.sidebar-dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.app-theme-dark ::-webkit-scrollbar-thumb:hover,
+.sidebar-dark ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.app-theme-light ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.app-theme-light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.app-theme-light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Legacy alias — inherits same tokens as app-theme-dark */
+.sidebar-dark {
+  --sidebar-bg: 0 0% 8%;
+  --sidebar-surface: 0 0% 13%;
+  --sidebar-border: 0 0% 18%;
+  --sidebar-foreground: 0 0% 98%;
+  --sidebar-muted: 0 0% 55%;
+  --surface: var(--sidebar-bg);
+  --surface-elevated: var(--sidebar-surface);
+  --background: var(--sidebar-bg);
+  --foreground: var(--sidebar-foreground);
+  --card: var(--sidebar-surface);
+  --card-foreground: var(--sidebar-foreground);
+  --muted: 0 0% 16%;
+  --muted-foreground: var(--sidebar-muted);
+  --border: var(--sidebar-border);
+  --input: var(--sidebar-border);
+  --primary: 24.6 95% 53.1%;
+  --primary-foreground: 0 0% 100%;
+  color: hsl(var(--sidebar-foreground));
+  background: hsl(var(--sidebar-bg));
 }
 
 .event-card-highlighted {
@@ -241,19 +365,10 @@ button:focus-visible {
   scrollbar-width: none;
 }
 
-/* Dark app shell */
-.app-shell.dark {
-  color: hsl(var(--foreground));
-}
-
-.dark .glass-panel {
-  background: hsl(var(--card) / 0.95);
-  color: hsl(var(--card-foreground));
-}
-
-/* Lift Mapbox bottom-right controls when mobile drawer is open */
-.mobile-drawer-open .map-root .mapboxgl-ctrl-bottom-right {
-  margin-bottom: 5rem;
+/* Lift Mapbox bottom-right controls when mobile drawer / bottom nav is open */
+.mobile-drawer-open .map-root .mapboxgl-ctrl-bottom-right,
+.bottom-nav-visible .map-root .mapboxgl-ctrl-bottom-right {
+  margin-bottom: 6.5rem;
 }
 
 /* Reduced motion */

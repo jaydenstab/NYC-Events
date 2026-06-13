@@ -22,7 +22,7 @@ const Toast: React.FC<ToastProps> = ({ toasts, onDismiss, isMobile = false }) =>
       {toasts.map((toast) => (
         <div
           key={toast.id}
-          className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl bg-foreground text-background shadow-xl text-sm font-medium max-w-sm animate-fadeIn"
+          className="pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl bg-surface-elevated text-foreground border border-border shadow-xl text-sm font-medium max-w-sm animate-fadeIn"
         >
           <span className="flex-1">{toast.message}</span>
           {toast.actionLabel && toast.onAction && (
@@ -32,7 +32,7 @@ const Toast: React.FC<ToastProps> = ({ toasts, onDismiss, isMobile = false }) =>
                 toast.onAction?.();
                 onDismiss(toast.id);
               }}
-              className="text-primary-foreground underline font-bold shrink-0"
+              className="text-primary underline font-bold shrink-0"
             >
               {toast.actionLabel}
             </button>

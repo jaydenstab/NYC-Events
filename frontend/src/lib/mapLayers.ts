@@ -2,7 +2,7 @@ import mapboxgl from 'mapbox-gl';
 import type { Event } from '@/types/Event';
 import { categoryConfig } from '@/types/Event';
 import { resolveEventFromMapClick } from '@/lib/mapEventResolver';
-import type { MapAppearance } from '@/hooks/useMapPreferences';
+import type { MapAppearance } from '@/hooks/useAppPreferences';
 import { EVENT_PIN_IMAGE_ID } from '@/lib/mapPinImage';
 
 const STYLE_URLS: Record<MapAppearance, string> = {
@@ -15,6 +15,29 @@ export const UNCLUSTERED_PIN_LAYER = 'unclustered-pin';
 export const CLUSTERS_LAYER_ID = 'clusters';
 export const CLUSTER_MAX_ZOOM = 12;
 export const CLUSTER_RADIUS = 30;
+export const CLUSTER_DISABLE_THRESHOLD = 10;
+
+export function shouldClusterEvents(eventCount: number): boolean {
+  return eventCount > CLUSTER_DISABLE_THRESHOLD;
+}
+
+export function buildEventsSourceClusterOptions(eventCount: number) {
+  if (!shouldClusterEvents(eventCount)) {
+    return { cluster: false as const, promoteId: 'id' as const };
+  }
+  return {
+    cluster: true as const,
+    clusterMaxZoom: CLUSTER_MAX_ZOOM,
+    clusterRadius: CLUSTER_RADIUS,
+    promoteId: 'id' as const,
+  };
+}
+
+export function removeEventSourceLayers(m: mapboxgl.Map) {
+  if (m.getLayer(CLUSTERS_LAYER_ID)) m.removeLayer(CLUSTERS_LAYER_ID);
+  if (m.getLayer(UNCLUSTERED_PIN_LAYER)) m.removeLayer(UNCLUSTERED_PIN_LAYER);
+  if (m.getSource('events-source')) m.removeSource('events-source');
+}
 
 const mapsWithHandlers = new WeakSet<mapboxgl.Map>();
 
@@ -22,41 +45,67 @@ export function appearanceToStyleUrl(appearance: MapAppearance): string {
   return STYLE_URLS[appearance] ?? STYLE_URLS.light;
 }
 
-export function enable3DExtras(m: mapboxgl.Map, pitch: number) {
-  if (!m.getSource('mapbox-dem')) {
-    m.addSource('mapbox-dem', {
-      type: 'raster-dem',
-      url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-      tileSize: 512,
-      maxzoom: 14,
-    });
-    m.setTerrain({ source: 'mapbox-dem', exaggeration: pitch > 0 ? 1.4 : 0 });
-  }
+export const BUILDINGS_LAYER_ID = '3d-buildings';
+export const TERRAIN_SOURCE_ID = 'mapbox-dem';
+export const MAP_3D_PITCH = 45;
+const TERRAIN_EXAGGERATION = 1.4;
 
-  if (pitch > 0 && !m.getLayer('3d-buildings')) {
-    const layers = m.getStyle().layers;
-    const labelLayerId = layers?.find(
-      (l) => l.type === 'symbol' && l.layout && (l.layout as Record<string, unknown>)['text-field']
-    )?.id;
+function addBuildingsLayer(m: mapboxgl.Map, appearance?: MapAppearance) {
+  if (m.getLayer(BUILDINGS_LAYER_ID)) return;
 
-    m.addLayer(
-      {
-        id: '3d-buildings',
-        source: 'composite',
-        'source-layer': 'building',
-        filter: ['==', 'extrude', 'true'],
-        type: 'fill-extrusion',
-        minzoom: 14,
-        paint: {
-          'fill-extrusion-color': '#aaa',
-          'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.05, ['get', 'height']],
-          'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.05, ['get', 'min_height']],
-          'fill-extrusion-opacity': 0.6,
-        },
+  const satellite = appearance === 'satellite';
+  const layers = m.getStyle().layers;
+  const labelLayerId = layers?.find(
+    (l) => l.type === 'symbol' && l.layout && (l.layout as Record<string, unknown>)['text-field']
+  )?.id;
+
+  m.addLayer(
+    {
+      id: BUILDINGS_LAYER_ID,
+      source: 'composite',
+      'source-layer': 'building',
+      filter: ['==', 'extrude', 'true'],
+      type: 'fill-extrusion',
+      minzoom: 14,
+      paint: {
+        'fill-extrusion-color': satellite ? '#6b6b6b' : '#aaa',
+        'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.05, ['get', 'height']],
+        'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.05, ['get', 'min_height']],
+        'fill-extrusion-opacity': satellite ? 0.45 : 0.6,
       },
-      labelLayerId
-    );
+    },
+    labelLayerId
+  );
+}
+
+/** Enable or disable terrain extrusion and 3D buildings (not just camera pitch). */
+export function setMap3DMode(m: mapboxgl.Map, enabled: boolean, appearance?: MapAppearance) {
+  if (enabled) {
+    if (!m.getSource(TERRAIN_SOURCE_ID)) {
+      m.addSource(TERRAIN_SOURCE_ID, {
+        type: 'raster-dem',
+        url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
+        tileSize: 512,
+        maxzoom: 14,
+      });
+    }
+    m.setTerrain({ source: TERRAIN_SOURCE_ID, exaggeration: TERRAIN_EXAGGERATION });
+    addBuildingsLayer(m, appearance);
+    if (m.getLayer(BUILDINGS_LAYER_ID)) {
+      m.setLayoutProperty(BUILDINGS_LAYER_ID, 'visibility', 'visible');
+    }
+    return;
   }
+
+  m.setTerrain(null);
+  if (m.getLayer(BUILDINGS_LAYER_ID)) {
+    m.removeLayer(BUILDINGS_LAYER_ID);
+  }
+}
+
+/** @deprecated use setMap3DMode */
+export function enable3DExtras(m: mapboxgl.Map, pitch: number, appearance?: MapAppearance) {
+  setMap3DMode(m, pitch > 0, appearance);
 }
 
 export function eventsToGeoJson(events: Event[]): GeoJSON.FeatureCollection {
@@ -95,10 +144,10 @@ export function buildEventLayerDefs(): mapboxgl.AnyLayer[] {
         'text-allow-overlap': true,
       },
       paint: {
-        'icon-color': ['step', ['get', 'point_count'], '#51bbd6', 10, '#f1f075', 30, '#f28cb1'],
-        'icon-halo-color': '#ffffff',
+        'icon-color': '#F97316',
+        'icon-halo-color': 'rgba(249, 115, 22, 0.35)',
         'icon-halo-width': 1.5,
-        'text-color': '#1a1a1a',
+        'text-color': '#ffffff',
       },
     },
     {
@@ -131,11 +180,11 @@ export function buildEventLayerDefs(): mapboxgl.AnyLayer[] {
         'icon-ignore-placement': false,
       },
       paint: {
-        'icon-color': ['get', 'color'],
+        'icon-color': '#F97316',
         'icon-halo-color': [
           'case',
           ['boolean', ['feature-state', 'selected'], false],
-          '#3b82f6',
+          '#F97316',
           '#ffffff',
         ],
         'icon-halo-width': [
@@ -154,20 +203,20 @@ export function initEventLayers(
   m: mapboxgl.Map,
   initialGeoJson: GeoJSON.FeatureCollection,
   getEvents: () => Event[],
-  getOnSelect: () => ((event: Event) => void) | undefined
+  getOnSelect: () => ((event: Event) => void) | undefined,
+  eventCount = initialGeoJson.features.length
 ) {
   if (!m.hasImage(EVENT_PIN_IMAGE_ID)) {
     return;
   }
 
+  const sourceSpec = buildEventsSourceClusterOptions(eventCount);
+
   if (!m.getSource('events-source')) {
     m.addSource('events-source', {
       type: 'geojson',
       data: initialGeoJson,
-      cluster: true,
-      clusterMaxZoom: CLUSTER_MAX_ZOOM,
-      clusterRadius: CLUSTER_RADIUS,
-      promoteId: 'id',
+      ...sourceSpec,
     });
   } else {
     (m.getSource('events-source') as mapboxgl.GeoJSONSource).setData(initialGeoJson);

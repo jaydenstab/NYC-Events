@@ -5,6 +5,16 @@
 
 Hyperlocal event discovery for New York City — multi-source scrapers, validation, geocoding, **hybrid search** (Postgres FTS + pgvector RRF), and a React + Mapbox 3D map.
 
+![WhatsUpNYC map UI (dark)](docs/screenshot.png)
+
+![WhatsUpNYC map UI (light)](docs/screenshot-light.png)
+
+_Screenshots: capture at 1280×800 with `frontend/.env.local` (`VITE_MAPBOX_TOKEN`). Dark is default; light theme under Profile → App appearance._
+
+**Live demo:** Deploy via [Railway](docs/DEPLOY_RAILWAY.md) — set your URL in this README after first deploy.
+
+**Search quality:** After ingest, label queries with `npm run label:search-golden` then run `npm run bench:search` (hybrid P@5 vs FTS).
+
 **Stack:** React · TypeScript · Mapbox GL · Node · Express · PostgreSQL/pgvector · Redis · BullMQ · Docker
 
 **Features**
@@ -83,6 +93,7 @@ Without ingest, the UI may show demo fallback events. Full setup (env tables, AP
 
 ## Documentation
 
+- [Deploy on Railway](docs/DEPLOY_RAILWAY.md) — public read-only demo (HTTPS, Postgres, worker)
 - [Setup & API](docs/SETUP.md) — environment, secrets, curl examples, Docker, event sources
 - [Ship gate](SHIP_GATE.md) — release verification (`npm run verify`)
 - [Roadmap](ROADMAP.md) — what's built, near-term priorities, and deprecated APIs

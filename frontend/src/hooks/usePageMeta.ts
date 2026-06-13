@@ -30,12 +30,18 @@ export function usePageMeta(selectedEvent: Event | null) {
       const desc =
         selectedEvent.description?.slice(0, 160) ||
         `${selectedEvent.name} in NYC — ${selectedEvent.address}`;
-      const ogImage = absoluteUrl(apiUrl(`/api/og/event/${encodeURIComponent(selectedEvent.id)}.svg`));
+      const ogImage = absoluteUrl(
+        apiUrl(`/api/og/event/${encodeURIComponent(selectedEvent.id)}.png`)
+      );
       setMetaTag('property', 'og:title', selectedEvent.name);
       setMetaTag('property', 'og:description', desc);
       setMetaTag('property', 'og:image', ogImage);
       setMetaTag('property', 'og:url', buildEventShareUrl(selectedEvent.id));
       setMetaTag('name', 'description', desc);
+      setMetaTag('name', 'twitter:card', 'summary_large_image');
+      setMetaTag('name', 'twitter:title', selectedEvent.name);
+      setMetaTag('name', 'twitter:description', desc);
+      setMetaTag('name', 'twitter:image', ogImage);
     } else {
       document.title = DEFAULT_TITLE;
       setMetaTag('property', 'og:title', 'WhatsUpNYC');

@@ -4,7 +4,9 @@ import type { NYC3DMapHandle } from '@/components/NYC3DMap';
 const NYC3DMap = lazy(() => import('@/components/NYC3DMap'));
 const EventModal = lazy(() => import('@/components/EventModal'));
 import EventsPanel, { type EventsPanelHandle, type SheetSnap } from '@/components/EventsPanel';
-import MapSettings from '@/components/MapSettings';
+import BottomNav, { type AppTab } from '@/components/BottomNav';
+import MapLegend from '@/components/MapLegend';
+import MapControlBar from '@/components/MapControlBar';
 import MapFabMenu from '@/components/MapFabMenu';
 import Toast from '@/components/Toast';
 import OfflineBanner from '@/components/OfflineBanner';
@@ -13,6 +15,7 @@ import { Event } from '@/types/Event';
 import { useWindowSize } from '@/hooks/useWindowSize';
 import { useSavedEvents } from '@/hooks/useSavedEvents';
 import { useSavedEventsHydration } from '@/hooks/useSavedEventsHydration';
+import { useEventDeepLinkHydration } from '@/hooks/useEventDeepLinkHydration';
 import { useEventFiltering } from '@/hooks/useEventFiltering';
 import { useEventSorting } from '@/hooks/useEventSorting';
 import { useEventsData } from '@/hooks/useEventsData';
@@ -20,11 +23,13 @@ import { useAppUrlState } from '@/hooks/useAppUrlState';
 import { useRecentSearches } from '@/hooks/useRecentSearches';
 import { usePageMeta } from '@/hooks/usePageMeta';
 import { useToast } from '@/hooks/useToast';
-import { useMapPreferences } from '@/hooks/useMapPreferences';
+import { useAppPreferences } from '@/hooks/useAppPreferences';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { requestUserLocation, useUserLocation } from '@/lib/geo';
 import { mergeEventsById } from '@/lib/mergeEvents';
 import { hasActiveFilters } from '@/lib/filters';
+import { shouldAutoFitEvents } from '@/lib/mapFit';
+import { usePanelCollapse } from '@/hooks/usePanelCollapse';
 import type { DemoFallbackReason } from '@/services/api';
 import { isOnboardingDismissed } from '@/lib/onboarding';
 
@@ -78,6 +83,8 @@ const App: React.FC = () => {
     sort,
     setSort,
     clearAllFilters,
+    activeTab,
+    setActiveTab,
   } = url;
 
   const {
@@ -93,6 +100,7 @@ const App: React.FC = () => {
     loadMore,
     hasMore,
     isLoadingMore,
+    catalogTotalCount,
   } = useEventsData({ searchQuery });
 
   const { savedHydratedEvents, savedHydrating, savedHydrateError } = useSavedEventsHydration(
@@ -105,14 +113,32 @@ const App: React.FC = () => {
     [events, savedHydratedEvents]
   );
 
+  const {
+    hydratedEvent: deepLinkEvent,
+    hydrating: deepLinkHydrating,
+  } = useEventDeepLinkHydration(eventId, mergedEvents, !loading);
+
+  const mergedWithDeepLink = useMemo(
+    () => (deepLinkEvent ? mergeEventsById(mergedEvents, [deepLinkEvent]) : mergedEvents),
+    [mergedEvents, deepLinkEvent]
+  );
+
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [eventNotFound, setEventNotFound] = useState(false);
   const [mapFocusedEventId, setMapFocusedEventId] = useState<string | null>(null);
   const [demoBannerDismissed, setDemoBannerDismissed] = useState(false);
-  const [isEventsPanelOpen, setIsEventsPanelOpen] = useState(!isMobile);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const { isExpanded: isEventsPanelOpen, setCollapsed, toggleCollapsed } =
+    usePanelCollapse(isMobile);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const { appearance, is3D, setAppearance, setIs3D } = useMapPreferences();
+  const {
+    appTheme,
+    resolvedAppTheme,
+    mapAppearance,
+    is3D,
+    setAppTheme,
+    setMapAppearance,
+    setIs3D,
+  } = useAppPreferences();
   const [listOnlyMode, setListOnlyMode] = useState(false);
   const [sheetSnap, setSheetSnap] = useState<SheetSnap>('half');
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -127,18 +153,16 @@ const App: React.FC = () => {
   const isSearching = searchQuery.trim().length >= 2;
   const searchScopedMeta = isSearchScopedMeta(apiMeta, searchQuery);
   const catalogTotal =
-    dataSource === 'live' && typeof apiMeta.totalCount === 'number' ? apiMeta.totalCount : undefined;
-  const showSearchCatalogNote =
-    isSearching &&
-    !searchLoading &&
-    catalogTotal != null &&
-    events.length < catalogTotal;
+    !isSearching && dataSource === 'live' && typeof catalogTotalCount === 'number'
+      ? catalogTotalCount
+      : undefined;
 
   usePageMeta(selectedEvent);
 
   useEffect(() => {
-    setIsEventsPanelOpen(!isMobile);
-  }, [isMobile]);
+    if (!eventId || isMobile || listOnlyMode) return;
+    setCollapsed(false);
+  }, [eventId, isMobile, listOnlyMode, setCollapsed]);
 
   useEffect(() => {
     if (dataSource === 'live') {
@@ -150,17 +174,17 @@ const App: React.FC = () => {
   }, [dataSource]);
 
   useEffect(() => {
-    if (!eventId || loading) return;
+    if (!eventId || loading || deepLinkHydrating) return;
 
-    const found = mergedEvents.find((e) => e.id === eventId);
+    const found = mergedWithDeepLink.find((e) => e.id === eventId);
     if (found) {
       setSelectedEvent(found);
       setEventNotFound(false);
-    } else if (mergedEvents.length > 0) {
+    } else {
       setSelectedEvent(null);
       setEventNotFound(true);
     }
-  }, [eventId, mergedEvents, loading]);
+  }, [eventId, mergedWithDeepLink, loading, deepLinkHydrating]);
 
   useEffect(() => {
     if (prevSearchLoadingRef.current && !searchLoading) {
@@ -206,7 +230,14 @@ const App: React.FC = () => {
 
       if (e.key === '/') {
         e.preventDefault();
+        if (!isMobile && !isEventsPanelOpen) setCollapsed(false);
         panelRef.current?.focusSearch();
+        return;
+      }
+
+      if (e.key === '[' && !isMobile && !selectedEvent && !eventNotFound && !shortcutsOpen) {
+        e.preventDefault();
+        toggleCollapsed();
         return;
       }
 
@@ -243,10 +274,15 @@ const App: React.FC = () => {
     eventNotFound,
     clearAllFilters,
     handleCloseModal,
+    isMobile,
+    isEventsPanelOpen,
+    setCollapsed,
+    toggleCollapsed,
+    shortcutsOpen,
   ]);
 
   const filteredEvents = useEventFiltering(
-    mergedEvents,
+    mergedWithDeepLink,
     selectedCategory,
     selectedDateRange,
     savedEventIds,
@@ -262,14 +298,30 @@ const App: React.FC = () => {
     isSearching
   );
 
+  const showSearchCatalogNote =
+    isSearching &&
+    !searchLoading &&
+    hasActiveFilters({
+      searchQuery: '',
+      selectedCategory,
+      selectedDateRange,
+      selectedBorough,
+      selectedPrice,
+      selectedTimeOfDay,
+      showSavedOnly: selectedCategory === 'saved',
+    }) &&
+    sortedEvents.length <
+      (searchScopedMeta && typeof apiMeta.totalCount === 'number' ? apiMeta.totalCount : events.length);
+
   const fitBoundsKey = `${selectedBorough}|${selectedDateRange}|${selectedCategory}|${filteredEvents.length}`;
   const fitBoundsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (selectedEvent) return;
+    if (listOnlyMode) return;
 
     if (fitBoundsTimerRef.current) clearTimeout(fitBoundsTimerRef.current);
     fitBoundsTimerRef.current = setTimeout(() => {
-      if (filteredEvents.length > 0 && filteredEvents.length <= 50) {
+      if (shouldAutoFitEvents(filteredEvents)) {
         mapRef.current?.fitBoundsToEvents(filteredEvents);
       }
     }, 300);
@@ -277,7 +329,7 @@ const App: React.FC = () => {
     return () => {
       if (fitBoundsTimerRef.current) clearTimeout(fitBoundsTimerRef.current);
     };
-  }, [fitBoundsKey, filteredEvents, selectedEvent]);
+  }, [fitBoundsKey, filteredEvents, selectedEvent, listOnlyMode]);
 
   useEffect(() => {
     if (!selectedEvent) {
@@ -300,6 +352,16 @@ const App: React.FC = () => {
   const handleMapResize = useCallback(() => {
     mapRef.current?.resize();
   }, []);
+
+  const handleListOnlyModeChange = useCallback(
+    (next: boolean) => {
+      if (next && !isMobile && !isEventsPanelOpen) {
+        setCollapsed(false);
+      }
+      setListOnlyMode(next);
+    },
+    [isMobile, isEventsPanelOpen, setCollapsed]
+  );
 
   const handleSelectEvent = useCallback(
     (event: Event) => {
@@ -328,6 +390,50 @@ const App: React.FC = () => {
     [handleSelectEvent]
   );
 
+  const handleCategoryChange = useCallback(
+    (category: string) => {
+      setSelectedCategory(category);
+      if (category === 'saved') {
+        setActiveTab('saved');
+      } else if (activeTab === 'saved') {
+        setActiveTab('discover');
+      }
+    },
+    [setSelectedCategory, activeTab, setActiveTab]
+  );
+
+  const handleTabChange = useCallback(
+    (tab: AppTab) => {
+      if (!isMobile && (tab === 'saved' || tab === 'profile')) {
+        setCollapsed(false);
+      }
+      setActiveTab(tab);
+      if (tab === 'saved') {
+        setSelectedCategory('saved');
+        if (isMobile) setSheetSnap('half');
+      } else if (tab === 'discover') {
+        if (selectedCategory === 'saved') setSelectedCategory('all');
+      }
+      panelRef.current?.scrollToTop?.();
+    },
+    [setActiveTab, setSelectedCategory, selectedCategory, isMobile, setCollapsed]
+  );
+
+  useEffect(() => {
+    if (activeTab === 'saved' && selectedCategory !== 'saved') {
+      setSelectedCategory('saved');
+    }
+  }, [activeTab, selectedCategory, setSelectedCategory]);
+  const handleDateRangeChange = useCallback(
+    (range: string) => {
+      setSelectedDateRange(range);
+      if (range !== 'all' && sort === 'relevance') {
+        setSort('date');
+      }
+    },
+    [setSelectedDateRange, setSort, sort]
+  );
+
   const handleToggleSaveSelected = useCallback(() => {
     if (selectedEvent) toggleSaveEvent(selectedEvent.id);
   }, [selectedEvent, toggleSaveEvent]);
@@ -339,7 +445,12 @@ const App: React.FC = () => {
       if (!wasSaved) {
         showToast('Saved', {
           actionLabel: 'View saved',
-          onAction: () => setSelectedCategory('saved'),
+          onAction: () => {
+            setSelectedCategory('saved');
+            setActiveTab('saved');
+            if (!isMobile) setCollapsed(false);
+            if (isMobile) setSheetSnap('half');
+          },
         });
       } else {
         showToast('Removed from saved', {
@@ -348,7 +459,7 @@ const App: React.FC = () => {
         });
       }
     },
-    [isEventSaved, toggleSaveEvent, showToast, setSelectedCategory]
+    [isEventSaved, toggleSaveEvent, showToast, setSelectedCategory, setActiveTab, isMobile, setCollapsed]
   );
 
   const handleNearMe = useCallback(async () => {
@@ -404,15 +515,21 @@ const App: React.FC = () => {
 
   return (
     <div
-      className={`app-shell w-screen h-screen relative overflow-hidden bg-[#1a1a1a] ${
-        appearance === 'dark' ? 'dark' : ''
-      } ${mobileDrawerOpen ? 'mobile-drawer-open' : ''}`}
+      className={`app-shell app-theme-${resolvedAppTheme} w-screen h-screen overflow-hidden ${
+        !isMobile && !listOnlyMode ? 'flex flex-row' : 'relative'
+      } ${mobileDrawerOpen ? 'mobile-drawer-open' : ''} ${isMobile ? 'bottom-nav-visible' : ''}`}
     >
       <a
         href="#panel-scroll"
         className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[5000] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-semibold"
       >
         Skip to events
+      </a>
+      <a
+        href="#map-stage"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-40 focus:z-[5000] focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg focus:font-semibold"
+      >
+        Skip to map
       </a>
 
       <OfflineBanner
@@ -445,34 +562,18 @@ const App: React.FC = () => {
         </div>
       )}
 
-      <Suspense
-        fallback={
-          <div className="map-root absolute inset-0 bg-[#1a1a1a] animate-pulse" aria-hidden />
-        }
-      >
-        <NYC3DMap
-          ref={mapRef}
-          events={sortedEvents}
-          onEventSelect={handleMapEventSelect}
-          onApproximateLocation={handleApproximateLocation}
-          appearance={appearance}
-          is3D={is3D}
-          hidden={listOnlyMode}
-        />
-      </Suspense>
-
       <EventsPanel
         ref={panelRef}
         events={sortedEvents}
         isLoading={loading}
         isExpanded={isEventsPanelOpen}
-        onToggleExpand={() => setIsEventsPanelOpen((v) => !v)}
+        onToggleExpand={toggleCollapsed}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
+        onCategoryChange={handleCategoryChange}
         selectedDateRange={selectedDateRange}
-        onDateRangeChange={setSelectedDateRange}
+        onDateRangeChange={handleDateRangeChange}
         selectedBorough={selectedBorough}
         onBoroughChange={setSelectedBorough}
         selectedPrice={selectedPrice}
@@ -505,12 +606,12 @@ const App: React.FC = () => {
         onRemoveSearch={() => setSearchQuery('')}
         onRemoveCategory={() => setSelectedCategory('all')}
         onRemoveDate={() => setSelectedDateRange('all')}
-        onRemoveSaved={() => setSelectedCategory('all')}
+        onRemoveSaved={() => handleCategoryChange('all')}
         onRemoveBorough={() => setSelectedBorough('all')}
         onRemovePrice={() => setSelectedPrice('all')}
         onRemoveTimeOfDay={() => setSelectedTimeOfDay('all')}
         listOnlyMode={listOnlyMode}
-        onListOnlyModeChange={setListOnlyMode}
+        onListOnlyModeChange={handleListOnlyModeChange}
         onMapResize={handleMapResize}
         approximateLocationMessage={approximateLocationMessage}
         recentSearches={recent}
@@ -524,8 +625,8 @@ const App: React.FC = () => {
         onLoadMore={loadMore}
         loadMoreError={loadMoreError}
         onSwipeSave={isMobile ? handleSwipeSave : undefined}
-        hideMobileBrowsePill={isMobile}
-        loadedCount={mergedEvents.length}
+        hideMobileBrowsePill={false}
+        loadedCount={events.length}
         catalogTotal={catalogTotal}
         isSearching={isSearching}
         searchTotalCount={
@@ -533,15 +634,84 @@ const App: React.FC = () => {
             ? apiMeta.totalCount
             : undefined
         }
+        searchCapped={isSearching && apiMeta.searchCapped === true}
+        searchLimit={typeof apiMeta.searchLimit === 'number' ? apiMeta.searchLimit : 50}
+        filteredEventCount={sortedEvents.length}
         showSearchCatalogNote={showSearchCatalogNote}
         savedHydrating={savedHydrating}
         savedHydrateError={savedHydrateError}
         mapEventCount={sortedEvents.length}
+        activeTab={activeTab}
+        appTheme={appTheme}
+        onAppThemeChange={setAppTheme}
+        mapAppearance={mapAppearance}
+        onMapAppearanceChange={setMapAppearance}
+        is3D={is3D}
+        onIs3DChange={setIs3D}
+        onOpenShortcuts={() => setShortcutsOpen(true)}
+        showBottomNavPadding={isMobile}
+        onTabChange={handleTabChange}
+      />
+
+      <div
+        id="map-stage"
+        className={
+          isMobile
+            ? 'map-stage absolute inset-0'
+            : listOnlyMode
+              ? 'hidden'
+              : 'map-stage relative flex-1 min-w-0 min-h-0'
+        }
+        aria-label="Map"
+      >
+        <Suspense
+          fallback={
+            <div className="map-root absolute inset-0 bg-surface animate-pulse" aria-hidden />
+          }
+        >
+          <NYC3DMap
+            ref={mapRef}
+            events={sortedEvents}
+            onEventSelect={handleMapEventSelect}
+            onApproximateLocation={handleApproximateLocation}
+            appearance={mapAppearance}
+            is3D={is3D}
+            hidden={listOnlyMode}
+          />
+        </Suspense>
+
+        <MapLegend hidden={listOnlyMode} eventCount={sortedEvents.length} />
+        <MapControlBar
+          mapRef={mapRef}
+          is3D={is3D}
+          onIs3DChange={setIs3D}
+          hidden={listOnlyMode}
+        />
+
+        <MapFabMenu
+          isMobile={isMobile}
+          visible={isMobile && (sheetSnap === 'collapsed' || listOnlyMode)}
+          eventCount={sortedEvents.length}
+          listOnlyMode={listOnlyMode}
+          onBrowseEvents={() => {
+            setSheetSnap('half');
+            panelRef.current?.setSheetSnap('half');
+          }}
+          onOpenProfile={() => handleTabChange('profile')}
+          onToggleListOnly={() => handleListOnlyModeChange(!listOnlyMode)}
+        />
+      </div>
+
+      <BottomNav
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        savedCount={savedEventIds.length}
+        hidden={!isMobile || Boolean(selectedEvent) || eventNotFound}
       />
 
       {error && mergedEvents.length === 0 && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-[2000] p-6 text-center">
-          <div className="bg-card rounded-3xl p-8 shadow-2xl max-w-sm">
+          <div className="bg-surface-elevated rounded-3xl p-8 shadow-2xl max-w-sm border border-border">
             <h2 className="text-2xl font-bold text-foreground mb-2">Connection Error</h2>
             <p className="text-muted-foreground mb-6">{error}</p>
             <button
@@ -554,31 +724,6 @@ const App: React.FC = () => {
           </div>
         </div>
       )}
-
-      <MapSettings
-        isOpen={isSettingsOpen}
-        onToggle={() => setIsSettingsOpen((v) => !v)}
-        hideToggle={isMobile}
-        demoBannerVisible={demoBannerVisible}
-        appearance={appearance}
-        onAppearanceChange={setAppearance}
-        is3D={is3D}
-        onIs3DChange={setIs3D}
-        listOnlyMode={listOnlyMode}
-      />
-
-      <MapFabMenu
-        isMobile={isMobile}
-        visible={isMobile && (sheetSnap === 'collapsed' || listOnlyMode)}
-        eventCount={sortedEvents.length}
-        listOnlyMode={listOnlyMode}
-        onBrowseEvents={() => {
-          setSheetSnap('half');
-          panelRef.current?.setSheetSnap('half');
-        }}
-        onToggleSettings={() => setIsSettingsOpen((v) => !v)}
-        onToggleListOnly={() => setListOnlyMode((v) => !v)}
-      />
 
       <Suspense fallback={null}>
         <EventModal

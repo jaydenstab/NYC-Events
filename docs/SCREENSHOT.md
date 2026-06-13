@@ -7,4 +7,8 @@ npm run dev
 # open http://localhost:3000
 ```
 
-Save as `docs/screenshot.png` and reference from the README hero section.
+Save as `docs/screenshot.png`, then add a short **Screenshot** section near the top of [README.md](../README.md):
+
+```markdown
+![WhatsUpNYC map UI](docs/screenshot.png)
+```

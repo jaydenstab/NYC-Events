@@ -142,7 +142,9 @@ class EventController {
       : DEFAULT_SEMANTIC_LIMIT;
 
     const forceRefresh = req.query.refresh === 'true';
-    const cacheKey = `events:main:g${cacheGen}:${req.query.reddit || ''}:${searchQuery}:${isSemantic}:${parsedLimit}:v${indexVersion}`;
+    const page = req.query.page ? parseInt(req.query.page, 10) : null;
+    const perPage = req.query.per_page ? parseInt(req.query.per_page, 10) : 50;
+    const cacheKey = `events:main:g${cacheGen}:${req.query.reddit || ''}:${searchQuery}:${isSemantic}:${parsedLimit}:p${Number.isFinite(page) && page >= 1 ? page : 0}:pp${Number.isFinite(perPage) && perPage >= 1 ? perPage : 50}:v${indexVersion}`;
     if (!forceRefresh) {
       const cached = await cache.get(cacheKey);
       if (cached) {
@@ -152,9 +154,6 @@ class EventController {
 
     try {
       const includeReddit = req.query.reddit === 'true';
-
-      const page = req.query.page ? parseInt(req.query.page, 10) : null;
-      const perPage = req.query.per_page ? parseInt(req.query.per_page, 10) : 50;
 
       const result = await eventService.getAggregatedEvents({
         includeReddit,

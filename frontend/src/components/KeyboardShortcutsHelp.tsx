@@ -8,6 +8,7 @@ interface KeyboardShortcutsHelpProps {
 
 const SHORTCUTS = [
   { keys: '/', desc: 'Focus search' },
+  { keys: '[', desc: 'Toggle sidebar (desktop)' },
   { keys: 'Esc', desc: 'Clear filters or close modal' },
   { keys: '?', desc: 'Show this help' },
 ] as const;
@@ -38,7 +39,7 @@ const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({ open, onC
         ref={dialogRef}
         role="dialog"
         aria-labelledby="shortcuts-title"
-        className="bg-card border border-border rounded-card shadow-2xl max-w-sm w-full p-5"
+        className="bg-surface-elevated border border-border rounded-card shadow-2xl max-w-sm w-full p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">

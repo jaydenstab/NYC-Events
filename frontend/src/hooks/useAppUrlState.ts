@@ -3,8 +3,10 @@ import { normalizeCategory, normalizeDateRange } from '@/lib/filters';
 import type { SortOption } from '@/hooks/useEventSorting';
 import type { PriceFilter } from '@/lib/price';
 import type { TimeOfDayFilter } from '@/lib/timeOfDay';
+import type { AppTab } from '@/components/BottomNav';
 
 const VALID_SORTS: SortOption[] = ['date', 'distance', 'relevance'];
+const VALID_TABS: AppTab[] = ['discover', 'saved', 'profile'];
 const VALID_BOROUGHS = ['all', 'Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
 const VALID_PRICES: PriceFilter[] = ['all', 'free', 'paid'];
 const VALID_TIMES: TimeOfDayFilter[] = ['all', 'morning', 'afternoon', 'evening'];
@@ -29,8 +31,14 @@ function normalizeTimeOfDay(time: string | null): TimeOfDayFilter {
   return 'all';
 }
 
+function normalizeTab(tab: string | null): AppTab {
+  if (tab && VALID_TABS.includes(tab as AppTab)) return tab as AppTab;
+  return 'discover';
+}
+
 export function useAppUrlState() {
   const [eventId, setEventId] = useQueryState('event', parseAsString.withDefault(''));
+  const [activeTab, setActiveTab] = useQueryState('tab', parseAsString.withDefault('discover'));
   const [searchQuery, setSearchQuery] = useQueryState(
     'q',
     parseAsString.withDefault('').withOptions({ throttleMs: 400 })
@@ -63,6 +71,7 @@ export function useAppUrlState() {
   const normalizedBorough = normalizeBorough(selectedBorough);
   const normalizedPrice = normalizePrice(selectedPrice);
   const normalizedTimeOfDay = normalizeTimeOfDay(selectedTimeOfDay);
+  const normalizedTab = normalizeTab(activeTab);
 
   const clearAllFilters = () => {
     setSearchQuery('');
@@ -97,5 +106,7 @@ export function useAppUrlState() {
     showSavedOnly: normalizedCategory === 'saved',
     setShowSavedOnly: (saved: boolean) => setSelectedCategory(saved ? 'saved' : 'all'),
     clearAllFilters,
+    activeTab: normalizedTab,
+    setActiveTab: (tab: AppTab) => setActiveTab(tab),
   };
 }

@@ -78,6 +78,50 @@ describe('useEventFiltering', () => {
     expect(result.current[0].id).toBe('f');
   });
 
+  it('filters tonight (today)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-12T20:00:00'));
+    const tonightEvents: Event[] = [
+      { ...events[0], id: 't1', date: '2026-06-12' },
+      { ...events[1], id: 't2', date: '2026-06-13' },
+    ];
+    const { result } = renderHook(() =>
+      useEventFiltering(tonightEvents, 'all', 'today', [])
+    );
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0].id).toBe('t1');
+  });
+
+  it('filters this weekend including current Saturday', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-13T12:00:00')); // Saturday
+    const weekendEvents: Event[] = [
+      { ...events[0], id: 'sat', date: '2026-06-13' },
+      { ...events[1], id: 'mon', date: '2026-06-15' },
+      { ...events[0], id: 'nextfri', date: '2026-06-19' },
+    ];
+    const { result } = renderHook(() =>
+      useEventFiltering(weekendEvents, 'all', 'weekend', [])
+    );
+    expect(result.current.map((e) => e.id)).toContain('sat');
+    expect(result.current.map((e) => e.id)).not.toContain('mon');
+    expect(result.current.map((e) => e.id)).not.toContain('nextfri');
+  });
+
+  it('filters this weekend on Sunday', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-14T12:00:00')); // Sunday
+    const weekendEvents: Event[] = [
+      { ...events[0], id: 'sun', date: '2026-06-14' },
+      { ...events[1], id: 'mon', date: '2026-06-15' },
+    ];
+    const { result } = renderHook(() =>
+      useEventFiltering(weekendEvents, 'all', 'weekend', [])
+    );
+    expect(result.current.map((e) => e.id)).toContain('sun');
+    expect(result.current.map((e) => e.id)).not.toContain('mon');
+  });
+
   it('filters by borough from address', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-06-12T12:00:00'));

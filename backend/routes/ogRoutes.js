@@ -5,6 +5,17 @@ const { buildShareCardSvg } = require('../services/shareCardImage');
 const { rowToEvent } = require('../utils/rowToEvent');
 const { asyncHandler } = require('../utils/errorUtils');
 
+let renderSvgToPng = null;
+try {
+  const { Resvg } = require('@resvg/resvg-js');
+  renderSvgToPng = (svg) => {
+    const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } });
+    return resvg.render().asPng();
+  };
+} catch {
+  renderSvgToPng = null;
+}
+
 const router = express.Router();
 
 const ogLimiter = rateLimit({
@@ -52,9 +63,18 @@ router.get(
       return;
     }
 
+    const svg = buildShareCardSvg(event);
+    if (renderSvgToPng) {
+      const png = renderSvgToPng(svg);
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.send(png);
+      return;
+    }
+
     res.setHeader('Content-Type', 'image/svg+xml');
     res.setHeader('Cache-Control', 'public, max-age=3600');
-    res.send(buildShareCardSvg(event));
+    res.send(svg);
   })
 );
 

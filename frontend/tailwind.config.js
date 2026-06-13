@@ -51,6 +51,26 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          elevated: "hsl(var(--surface-elevated))",
+        },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar-bg))",
+          surface: "hsl(var(--sidebar-surface))",
+          border: "hsl(var(--sidebar-border))",
+          foreground: "hsl(var(--sidebar-foreground))",
+          muted: "hsl(var(--sidebar-muted))",
+        },
+        overlay: {
+          scrim: "hsl(var(--overlay-scrim))",
+        },
+        status: {
+          warning: "hsl(var(--status-warning))",
+          "warning-bg": "hsl(var(--status-warning-bg))",
+          success: "hsl(var(--status-success))",
+          "success-bg": "hsl(var(--status-success-bg))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

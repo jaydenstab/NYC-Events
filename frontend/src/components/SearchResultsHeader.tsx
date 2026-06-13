@@ -10,9 +10,12 @@ const SORT_LABELS: Record<SortOption, string> = {
 interface SearchResultsHeaderProps {
   searchQuery: string;
   eventsCount: number;
+  filteredCount?: number;
   searchLoading?: boolean;
   isSearching?: boolean;
   searchTotalCount?: number;
+  searchCapped?: boolean;
+  searchLimit?: number;
   sort: SortOption;
   showSearchCatalogNote?: boolean;
 }
@@ -20,9 +23,12 @@ interface SearchResultsHeaderProps {
 const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
   searchQuery,
   eventsCount,
+  filteredCount,
   searchLoading = false,
   isSearching = false,
   searchTotalCount,
+  searchCapped = false,
+  searchLimit = 50,
   sort,
   showSearchCatalogNote = false,
 }) => {
@@ -32,7 +38,7 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
   if (searchLoading) {
     return (
       <p
-        className="px-5 pt-3 pb-1 text-xs text-muted-foreground"
+        className="pt-3 pb-1 text-xs text-muted-foreground"
         role="status"
         aria-live="polite"
       >
@@ -41,24 +47,24 @@ const SearchResultsHeader: React.FC<SearchResultsHeaderProps> = ({
     );
   }
 
-  const countLabel = isSearching
-    ? String(eventsCount)
-    : searchTotalCount != null && searchTotalCount > eventsCount
-      ? `${eventsCount} of ${searchTotalCount}`
-      : String(eventsCount);
-
-  const capNote =
+  const displayCount = filteredCount ?? eventsCount;
+  const countLabel =
     isSearching &&
     searchTotalCount != null &&
-    eventsCount >= searchTotalCount &&
-    searchTotalCount >= 50
-      ? ' · Showing top matches'
+    displayCount < searchTotalCount &&
+    displayCount !== searchTotalCount
+      ? `${displayCount} of ${searchTotalCount}`
+      : String(displayCount);
+
+  const capNote =
+    isSearching && searchCapped
+      ? ` · Showing top ${searchLimit} matches`
       : '';
 
   return (
-    <div className="px-5 pt-3 pb-1">
+    <div className="pt-3 pb-1">
       <p className="text-xs text-muted-foreground" aria-live="polite">
-        {countLabel} result{eventsCount === 1 ? '' : 's'} for &ldquo;{trimmed}&rdquo; · sorted{' '}
+        {countLabel} result{displayCount === 1 ? '' : 's'} for &ldquo;{trimmed}&rdquo; · sorted{' '}
         {SORT_LABELS[sort]}
         {capNote}
       </p>

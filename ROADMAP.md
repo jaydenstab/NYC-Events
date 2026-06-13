@@ -28,13 +28,16 @@ Current capabilities (grouped for scanability — not a full changelog).
 
 - React + TypeScript; Mapbox 3D map with pin clustering
 - Semantic search UI; saved events (localStorage) + server hydration for missing IDs
+- Shareable event links (`?event=`) with deep-link hydration, PNG OG cards, and crawler meta injection
+- Tonight / This weekend discovery shortcuts with URL state (`when=`)
 - Offline banner; demo fallback when API is empty or unreachable
 - Lazy-loaded map and event modal (Mapbox code-split)
 
 **Infrastructure**
 
 - Split Docker images (`Dockerfile.api`, `Dockerfile.worker`); PostgreSQL + pgvector in prod
-- Prometheus `/metrics`; CI workflow; ship gate (`npm run verify`); backend benchmarks
+- Railway deploy runbook ([docs/DEPLOY_RAILWAY.md](docs/DEPLOY_RAILWAY.md)); Docker build args for `VITE_*`
+- Prometheus `/metrics`; CI workflow; ship gate (`npm run verify`); search eval harness (`npm run bench:search`)
 
 ## Near-term
 
@@ -42,10 +45,10 @@ Prioritized work with clear done criteria.
 
 | Priority | Item | Done when |
 |----------|------|-----------|
-| P0 | Validate and enable NYC Parks / NYC Go / Union Square scrapers | Ship gate passes with scrapers enabled; smoke ingest reports no new degraded sources |
-| P0 | Public read-only deploy | Frontend + API served over HTTPS; production env documented in [docs/SETUP.md](docs/SETUP.md) |
-| P1 | Catalog and search count honesty | Load-more and search headers reflect server `totalCount`; no silent pagination cap mismatch |
-| P1 | README screenshot | `docs/screenshot.png` captured per [docs/SCREENSHOT.md](docs/SCREENSHOT.md) and linked from README |
+| P0 | Validate and enable NYC Parks / NYC Go / Union Square scrapers | `npm run verify:scrapers` passes; production ingest with flags on reports no degraded sources |
+| P0 | Public read-only deploy | Live HTTPS URL on Railway; [docs/DEPLOY_RAILWAY.md](docs/DEPLOY_RAILWAY.md) |
+| P1 | Catalog and search count honesty | Shipped — future-only pagination counts, semantic cap meta, honest UI labels |
+| P1 | README screenshot | `docs/screenshot.png` linked from README |
 | P2 | Legacy API cleanup | Remove or document `GET /api/events/simple`; drop unused 410 per-source routes if no callers remain |
 
 ## Medium-term

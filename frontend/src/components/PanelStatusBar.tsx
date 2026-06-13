@@ -10,9 +10,9 @@ interface PanelStatusBarProps {
 }
 
 const STATUS_STYLES: Record<Exclude<PanelStatusType, null>, string> = {
-  ingesting: 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-200',
-  semantic: 'bg-primary/5 text-primary',
-  approximate: 'bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200',
+  ingesting: 'bg-emerald-500/10 text-emerald-700',
+  semantic: 'bg-primary/10 text-primary',
+  approximate: 'bg-amber-500/15 text-amber-900',
   map: 'bg-muted text-muted-foreground',
 };
 
@@ -25,7 +25,7 @@ const PanelStatusBar: React.FC<PanelStatusBarProps> = ({ status, message, onDism
     <div
       role="status"
       aria-live="polite"
-      className={`mx-5 mb-2 p-3 rounded-xl text-xs flex items-start justify-between gap-2 ${STATUS_STYLES[status]}`}
+      className={`mb-2 p-3 rounded-xl text-xs flex items-start justify-between gap-2 ${STATUS_STYLES[status]}`}
     >
       <span>{message}</span>
       {dismissible && onDismiss && (
@@ -33,7 +33,7 @@ const PanelStatusBar: React.FC<PanelStatusBarProps> = ({ status, message, onDism
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="shrink-0 p-0.5 rounded hover:bg-black/5"
+          className="shrink-0 p-0.5 rounded hover:bg-muted"
         >
           <X className="w-3.5 h-3.5" />
         </button>

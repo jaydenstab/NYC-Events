@@ -1,5 +1,5 @@
 import { forwardRef, useState, useCallback } from 'react';
-import { Search, X, History } from 'lucide-react';
+import { Search, X, History, SlidersHorizontal } from 'lucide-react';
 
 interface SearchBarProps {
   value: string;
@@ -11,6 +11,8 @@ interface SearchBarProps {
   onFocus?: () => void;
   onBlur?: () => void;
   searchFocused?: boolean;
+  onFilterClick?: () => void;
+  filterActiveCount?: number;
 }
 
 const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBar(
@@ -24,6 +26,8 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBa
     onFocus,
     onBlur,
     searchFocused = false,
+    onFilterClick,
+    filterActiveCount = 0,
   },
   ref
 ) {
@@ -56,7 +60,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBa
   };
 
   return (
-    <div className="px-5 pb-3 pt-3 shrink-0" data-testid="sticky-search">
+    <div className="px-5 pb-3 shrink-0" data-testid="sticky-search">
       <div className="relative">
         <label htmlFor="events-search" className="sr-only">
           Search events
@@ -69,7 +73,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBa
           ref={ref}
           id="events-search"
           type="search"
-          placeholder="Search events, venues, vibes…"
+          placeholder="Search events, venues, or neighborhoods…"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={onFocus}
@@ -83,11 +87,11 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBa
               ? `recent-search-${highlightIndex}`
               : undefined
           }
-          className="w-full py-3 pl-10 pr-20 border-2 border-border rounded-xl text-sm bg-background outline-none shadow-sm focus:border-primary"
+          className="w-full py-3 pl-10 pr-16 border border-border rounded-xl text-sm bg-surface-elevated text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder:text-muted-foreground"
         />
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
           {!value.trim() && (
-            <kbd className="hidden sm:inline text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-border">
+            <kbd className="hidden sm:inline text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded border border-sidebar-border mr-0.5">
               /
             </kbd>
           )}
@@ -96,7 +100,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBa
               type="button"
               onClick={() => onChange('')}
               aria-label="Clear search"
-              className="p-1 rounded-lg hover:bg-muted text-muted-foreground"
+              className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
             >
               <X className="w-3.5 h-3.5" />
             </button>
@@ -107,13 +111,28 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBa
               aria-hidden
             />
           )}
+          {onFilterClick && (
+            <button
+              type="button"
+              onClick={onFilterClick}
+              aria-label={`Filters${filterActiveCount > 0 ? `, ${filterActiveCount} active` : ''}`}
+              className="relative p-1.5 rounded-lg hover:bg-muted text-muted-foreground hover:text-foreground"
+            >
+              <SlidersHorizontal className="w-4 h-4" aria-hidden />
+              {filterActiveCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-0.5 rounded-full bg-primary text-[8px] text-primary-foreground font-bold flex items-center justify-center">
+                  {filterActiveCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
         {showRecent && (
           <div
             id="recent-searches-list"
             role="listbox"
             aria-label="Recent searches"
-            className="absolute left-0 right-0 top-full mt-1 z-20 bg-card border border-border rounded-xl shadow-lg overflow-hidden"
+            className="absolute left-0 right-0 top-full mt-1 z-20 bg-surface-elevated border border-border rounded-xl shadow-lg overflow-hidden"
           >
             {recentSearches.map((q, idx) => (
               <button
@@ -136,7 +155,7 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(function SearchBa
               <button
                 type="button"
                 onClick={onClearRecent}
-                className="w-full text-left px-4 py-2 border-t border-border text-xs font-semibold text-muted-foreground hover:bg-muted"
+                className="w-full text-left px-4 py-2 border-t border-sidebar-border text-xs font-semibold text-muted-foreground hover:bg-muted"
               >
                 Clear recent
               </button>

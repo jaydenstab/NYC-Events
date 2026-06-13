@@ -30,6 +30,9 @@ export interface EventsApiMeta {
   searchMode?: string;
   semantic?: boolean;
   searchQuery?: string | null;
+  searchCapped?: boolean;
+  searchLimit?: number;
+  hybridSearch?: boolean;
   [key: string]: unknown;
 }
 

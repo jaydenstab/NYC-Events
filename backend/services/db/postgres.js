@@ -178,12 +178,13 @@ class PostgresDatabase {
     await this.init();
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
     const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
+    const upcomingWhere = `date IS NULL OR date = 'TBD' OR date = '' OR date >= (CURRENT_TIMESTAMP AT TIME ZONE 'America/New_York')::date`;
     const [{ rows }, countResult] = await Promise.all([
       this.pool.query(
-        `SELECT ${EVENT_COLS} FROM events ORDER BY date DESC LIMIT $1 OFFSET $2`,
+        `SELECT ${EVENT_COLS} FROM events WHERE ${upcomingWhere} ORDER BY date DESC NULLS LAST LIMIT $1 OFFSET $2`,
         [safeLimit, safeOffset]
       ),
-      this.pool.query('SELECT COUNT(*)::int AS count FROM events'),
+      this.pool.query(`SELECT COUNT(*)::int AS count FROM events WHERE ${upcomingWhere}`),
     ]);
     return {
       events: rows.map(rowToEvent).filter(Boolean),

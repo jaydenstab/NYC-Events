@@ -41,6 +41,10 @@ jobs:
           context: .
           file: Dockerfile.api
           push: ${{ github.event.inputs.push_images != 'false' }}
+          build-args: |
+            VITE_API_KEY=${{ secrets.VITE_API_KEY }}
+            VITE_MAPBOX_ACCESS_TOKEN=${{ secrets.VITE_MAPBOX_ACCESS_TOKEN }}
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/whatsupnyc-api:latest
             whatsupnyc-api:local

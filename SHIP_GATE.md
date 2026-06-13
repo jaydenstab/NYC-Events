@@ -1,6 +1,6 @@
-# Ship gate — no git push until green
+# Ship gate — release verification
 
-**Rule:** Do not `git commit`, `git push`, or open a merge-ready PR until every step below passes on the branch you intend to ship.
+**Rule:** Before merging or tagging a release, ensure every step below passes on the branch you intend to ship.
 
 Agents and humans use the same bar. "Works on my machine" without these commands is not shippable.
 
@@ -53,9 +53,10 @@ Runs `test:unit` + `verify:ingest` + `audit:quality` (does not start the dev ser
 
 ```bash
 cd backend && npm run test:semantic
+cd backend && npm run verify:scrapers
 ```
 
-Heavy Transformers load; not required for every push.
+`verify:scrapers` enables NYC Parks / NYC Go / Union Square, runs per-source smoke + full ingest. Not part of the default ship gate (slow, network-dependent).
 
 ## Git workflow
 

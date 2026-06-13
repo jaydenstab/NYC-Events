@@ -12,7 +12,7 @@ const BoroughFilters: React.FC<BoroughFiltersProps> = ({ selected, onChange }) =
     <div
       role="radiogroup"
       aria-label="Filter by borough"
-      className="flex gap-1.5 px-5 pb-2 overflow-x-auto category-scroll min-h-[40px] items-center"
+      className="flex gap-1.5 pb-2 overflow-x-auto category-scroll min-h-[40px] items-center"
     >
       {BOROUGHS.map((borough) => {
         const isSelected = selected === borough;
@@ -26,7 +26,7 @@ const BoroughFilters: React.FC<BoroughFiltersProps> = ({ selected, onChange }) =
             className={`px-3 py-1.5 rounded-xl text-xs font-semibold border whitespace-nowrap transition-all cursor-pointer shrink-0 ${
               isSelected
                 ? 'border-primary bg-primary/10 text-primary'
-                : 'border-black/5 dark:border-white/10 bg-card text-muted-foreground'
+                : 'border-border bg-muted/50 text-muted-foreground'
             }`}
           >
             {borough === 'all' ? 'All boroughs' : borough}

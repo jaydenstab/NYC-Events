@@ -2,6 +2,7 @@ import { apiUrl, apiAuthHeaders } from '@/lib/apiConfig';
 import { extractEventsArray, extractEventsMeta, EventsApiMeta } from '@/lib/apiResponse';
 import { classifyEventLink } from '@/lib/eventLink';
 import { Event } from '@/types/Event';
+import { decodeHtmlEntities } from '@/lib/text';
 
 export type DataSource = 'live' | 'demo';
 
@@ -11,6 +12,8 @@ export interface FetchEventsResult {
   events: Event[];
   meta: EventsApiMeta;
   dataSource: DataSource;
+  /** Raw row count from API before client-side date filter */
+  rawEventCount: number;
   /** Set when dataSource is demo — drives banner copy */
   demoReason?: DemoFallbackReason;
 }
@@ -71,7 +74,7 @@ export function toUiEvent(raw: Record<string, unknown>, index: number): Event {
 
   return {
     id: String(raw.id || `event-${index + 1}`),
-    name: String(raw.name || 'Unknown Event'),
+    name: decodeHtmlEntities(String(raw.name || 'Unknown Event')),
     category: String(raw.category || 'other').toLowerCase(),
     lat: coordsValid ? Number(raw.latitude) : NYC_DEFAULT.lat,
     lng: coordsValid ? Number(raw.longitude) : NYC_DEFAULT.lng,
@@ -112,10 +115,10 @@ function filterFutureEvents(events: Event[]): Event[] {
 function buildEventsQuery(options: FetchEventsOptions): string {
   const params = new URLSearchParams();
   const search = options.search?.trim();
-  const isSearch = Boolean(search);
+  const isSearch = Boolean(search && search.length >= 2);
 
-  if (search) params.set('search', search);
-  if (options.semantic) params.set('semantic', 'true');
+  if (isSearch && search) params.set('search', search);
+  if (options.semantic && isSearch) params.set('semantic', 'true');
 
   const shouldPaginate =
     options.paginate !== false && !isSearch && !options.semantic;
@@ -133,7 +136,12 @@ function buildEventsQuery(options: FetchEventsOptions): string {
 export async function fetchEventsByIds(ids: string[]): Promise<FetchEventsResult> {
   const unique = [...new Set(ids.map((id) => id.trim()).filter(Boolean))];
   if (unique.length === 0) {
-    return { events: [], meta: { totalCount: 0, idsMode: true }, dataSource: 'live' };
+    return {
+      events: [],
+      meta: { totalCount: 0, idsMode: true },
+      dataSource: 'live',
+      rawEventCount: 0,
+    };
   }
 
   const params = new URLSearchParams();
@@ -156,7 +164,7 @@ export async function fetchEventsByIds(ids: string[]): Promise<FetchEventsResult
   const meta = extractEventsMeta(data);
   const events = filterFutureEvents(rawEvents.map((row, i) => toUiEvent(row, i)));
 
-  return { events, meta, dataSource: 'live' };
+  return { events, meta, dataSource: 'live', rawEventCount: rawEvents.length };
 }
 
 export async function fetchEvents(
@@ -188,6 +196,7 @@ export async function fetchEvents(
     events,
     meta,
     dataSource: 'live',
+    rawEventCount: rawEvents.length,
   };
 }
 
@@ -209,7 +218,7 @@ export async function loadEventsWithFallback(
 ): Promise<FetchEventsResult> {
   try {
     const result = await fetchEvents(options);
-    const isSearching = Boolean(options.search?.trim());
+    const isSearching = Boolean(options.search?.trim() && options.search.trim().length >= 2);
     const dbTotal =
       typeof result.meta.totalCount === 'number'
         ? result.meta.totalCount
@@ -222,6 +231,7 @@ export async function loadEventsWithFallback(
         meta: { ...result.meta, totalCount: fallbacks.length },
         dataSource: 'demo',
         demoReason: 'empty_db',
+        rawEventCount: 0,
       };
     }
 
@@ -236,6 +246,7 @@ export async function loadEventsWithFallback(
       meta: { totalCount: fallbacks.length },
       dataSource: 'demo',
       demoReason: 'network_error',
+      rawEventCount: 0,
     };
   }
 }

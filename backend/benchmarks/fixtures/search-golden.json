@@ -2,14 +2,10 @@
   {
     "query": "jazz brooklyn",
     "relevantEventIds": [],
-    "notes": "Populate event ids from live DB after ingest; empty = skipped in strict mode"
+    "notes": "Run npm run label:search-golden after ingest, then paste 3–5 ids here"
   },
   {
     "query": "free comedy",
-    "relevantEventIds": []
-  },
-  {
-    "query": "art gallery manhattan",
     "relevantEventIds": []
   },
   {
@@ -17,7 +13,31 @@
     "relevantEventIds": []
   },
   {
+    "query": "art gallery opening",
+    "relevantEventIds": []
+  },
+  {
+    "query": "outdoor fitness central park",
+    "relevantEventIds": []
+  },
+  {
+    "query": "indie rock show",
+    "relevantEventIds": []
+  },
+  {
+    "query": "poetry reading",
+    "relevantEventIds": []
+  },
+  {
     "query": "food festival",
+    "relevantEventIds": []
+  },
+  {
+    "query": "dance performance",
+    "relevantEventIds": []
+  },
+  {
+    "query": "tech meetup",
     "relevantEventIds": []
   }
 ]

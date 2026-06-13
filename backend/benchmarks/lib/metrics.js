@@ -50,12 +50,23 @@ function ndcgAtK(relevantIds, rankedIds, k) {
 }
 
 function summarizeSearchBenchmark(evaluations) {
-  const n = evaluations.length || 1;
+  if (!evaluations.length) {
+    return {
+      count: 0,
+      mrr: null,
+      precisionAt5: null,
+      ndcgAt10: null,
+      map: null,
+    };
+  }
+  const n = evaluations.length;
   return {
-    count: evaluations.length,
+    count: n,
     mrr: meanReciprocalRank(evaluations),
-    precisionAt5: evaluations.reduce((s, e) => s + precisionAtK(e.relevantIds, e.rankedIds, 5), 0) / n,
-    ndcgAt10: evaluations.reduce((s, e) => s + ndcgAtK(e.relevantIds, e.rankedIds, 10), 0) / n,
+    precisionAt5:
+      evaluations.reduce((s, e) => s + precisionAtK(e.relevantIds, e.rankedIds, 5), 0) / n,
+    ndcgAt10:
+      evaluations.reduce((s, e) => s + ndcgAtK(e.relevantIds, e.rankedIds, 10), 0) / n,
     map: evaluations.reduce((s, e) => s + averagePrecision(e.relevantIds, e.rankedIds), 0) / n,
   };
 }

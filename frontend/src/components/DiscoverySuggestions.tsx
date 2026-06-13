@@ -14,7 +14,7 @@ const DiscoverySuggestions: React.FC<DiscoverySuggestionsProps> = ({
 }) => {
   const chipClass =
     variant === 'onboarding'
-      ? 'px-3 py-1 rounded-full bg-white dark:bg-secondary text-xs font-medium border border-border hover:border-primary/40'
+      ? 'px-3 py-1 rounded-full bg-surface-elevated text-xs font-medium border border-border hover:border-primary/40 text-foreground'
       : 'px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-muted/50 hover:bg-muted text-foreground';
 
   return (

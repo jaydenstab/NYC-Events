@@ -36,6 +36,7 @@ describe('useSavedEventsHydration', () => {
       events: [savedEvent],
       meta: { totalCount: 1, idsMode: true },
       dataSource: 'live',
+      rawEventCount: 1,
     });
   });
 

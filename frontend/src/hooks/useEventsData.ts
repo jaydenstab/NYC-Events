@@ -3,6 +3,7 @@ import {
   loadEventsWithFallback,
   fetchEvents,
   EventsFetchError,
+  EVENTS_PER_PAGE,
   type DataSource,
   type DemoFallbackReason,
   type FetchEventsResult,
@@ -27,6 +28,7 @@ export interface UseEventsDataReturn {
   error: string | null;
   loadMoreError: string | null;
   apiMeta: EventsApiMeta;
+  catalogTotalCount: number | undefined;
   dataSource: DataSource;
   demoReason: DemoFallbackReason | undefined;
   requestId: string | undefined;
@@ -54,6 +56,7 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
   const [error, setError] = useState<string | null>(null);
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   const [apiMeta, setApiMeta] = useState<EventsApiMeta>({});
+  const [catalogTotalCount, setCatalogTotalCount] = useState<number | undefined>();
   const [dataSource, setDataSource] = useState<DataSource>('live');
   const [demoReason, setDemoReason] = useState<DemoFallbackReason | undefined>();
   const [requestId, setRequestId] = useState<string | undefined>();
@@ -63,26 +66,29 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
   const hadSearchRef = useRef(false);
   const searchAbortRef = useRef<AbortController | null>(null);
 
-  const applyResult = useCallback((result: FetchEventsResult, append = false) => {
-    if (append && result.events.length === 0) {
-      setCatalogExhausted(true);
-      return;
-    }
-    setEvents((prev) => (append ? dedupeById([...prev, ...result.events]) : result.events));
-    setApiMeta((prev) => ({
-      ...result.meta,
-      totalCount:
-        typeof result.meta.totalCount === 'number' ? result.meta.totalCount : prev.totalCount,
-    }));
-    setDataSource(result.dataSource);
-    setDemoReason(result.demoReason);
-    setRequestId(typeof result.meta.requestId === 'string' ? result.meta.requestId : undefined);
-    setError(null);
-    if (!append) {
-      setCatalogExhausted(false);
-      setLoadMoreError(null);
-    }
-  }, []);
+  const applyResult = useCallback(
+    (result: FetchEventsResult, append = false, isSearch = false) => {
+      if (append) {
+        if (result.rawEventCount === 0) {
+          setCatalogExhausted(true);
+        }
+      } else if (!isSearch && typeof result.meta.totalCount === 'number') {
+        setCatalogTotalCount(result.meta.totalCount);
+      }
+
+      setEvents((prev) => (append ? dedupeById([...prev, ...result.events]) : result.events));
+      setApiMeta(result.meta);
+      setDataSource(result.dataSource);
+      setDemoReason(result.demoReason);
+      setRequestId(typeof result.meta.requestId === 'string' ? result.meta.requestId : undefined);
+      setError(null);
+      if (!append) {
+        setCatalogExhausted(false);
+        setLoadMoreError(null);
+      }
+    },
+    []
+  );
 
   const refetch = useCallback(
     async (query = '', semantic = false, signal?: AbortSignal) => {
@@ -91,14 +97,15 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
         else setSearchLoading(true);
 
         setPage(1);
-        const useSemantic = semantic && query.trim().length >= 2;
+        const isSearch = query.trim().length >= 2;
+        const useSemantic = semantic && isSearch;
         const result = await loadEventsWithFallback({
           search: query,
           semantic: useSemantic,
           signal,
           page: 1,
         });
-        applyResult(result, false);
+        applyResult(result, false, isSearch);
       } catch (err) {
         if (err instanceof Error && err.name === 'AbortError') return;
         if (err instanceof EventsFetchError && err.authError) {
@@ -123,8 +130,11 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
     if (term.length >= 2 || isLoadingMore || loading || searchLoading) return;
     if (dataSource !== 'live') return;
 
-    const total =
-      typeof apiMeta.totalCount === 'number' ? apiMeta.totalCount : events.length;
+    const total = catalogTotalCount ?? events.length;
+    if (page * EVENTS_PER_PAGE >= total) {
+      setCatalogExhausted(true);
+      return;
+    }
     if (events.length >= total) return;
 
     const nextPage = page + 1;
@@ -132,8 +142,11 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
       setIsLoadingMore(true);
       setLoadMoreError(null);
       const result = await fetchEvents({ page: nextPage, paginate: true });
-      applyResult(result, true);
+      applyResult(result, true, false);
       setPage(nextPage);
+      if (result.rawEventCount === 0 || nextPage * EVENTS_PER_PAGE >= total) {
+        setCatalogExhausted(true);
+      }
     } catch (err) {
       if (err instanceof EventsFetchError && err.authError) return;
       setLoadMoreError(err instanceof Error ? err.message : 'Failed to load more events');
@@ -146,19 +159,18 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
     loading,
     searchLoading,
     dataSource,
-    apiMeta.totalCount,
+    catalogTotalCount,
     events.length,
     page,
     applyResult,
   ]);
 
   const isSearching = debouncedSearch.trim().length >= 2;
-  const totalCount = typeof apiMeta.totalCount === 'number' ? apiMeta.totalCount : events.length;
   const hasMore =
     !isSearching &&
     dataSource === 'live' &&
     !catalogExhausted &&
-    totalCount > events.length;
+    (catalogTotalCount ?? 0) > events.length;
 
   useEffect(() => {
     refetch();
@@ -180,7 +192,8 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
     searchAbortRef.current = controller;
 
     hadSearchRef.current = !!term;
-    const useSemantic = semanticSearch && term.length >= 2;
+    const isSearch = term.length >= 2;
+    const useSemantic = semanticSearch && isSearch;
     refetch(term, useSemantic, controller.signal);
   }, [debouncedSearch, semanticSearch, loading, refetch]);
 
@@ -234,6 +247,7 @@ export function useEventsData(options: UseEventsDataOptions = {}): UseEventsData
     error,
     loadMoreError,
     apiMeta,
+    catalogTotalCount,
     dataSource,
     demoReason,
     requestId,

@@ -6,23 +6,28 @@ import { dismissOnboarding } from '@/lib/onboarding';
 interface OnboardingBannerProps {
   onDismiss: () => void;
   onExampleSearch: (query: string) => void;
+  isMobile?: boolean;
 }
 
-const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss, onExampleSearch }) => {
+const OnboardingBanner: React.FC<OnboardingBannerProps> = ({
+  onDismiss,
+  onExampleSearch,
+  isMobile = false,
+}) => {
   const handleDismiss = () => {
     dismissOnboarding();
     onDismiss();
   };
 
   return (
-    <div className="mx-5 mb-3 p-4 rounded-2xl bg-primary/5 border border-primary/20 text-sm">
+    <div className="mb-3 p-4 rounded-2xl bg-primary/5 border border-primary/20 text-sm">
       <div className="flex items-start justify-between gap-2 mb-3">
         <p className="font-bold text-foreground">Welcome to WhatsUpNYC</p>
         <button
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss onboarding"
-          className="shrink-0 p-1 rounded-lg hover:bg-black/5"
+          className="shrink-0 p-1 rounded-lg hover:bg-muted"
         >
           <X className="w-4 h-4" />
         </button>
@@ -42,7 +47,9 @@ const OnboardingBanner: React.FC<OnboardingBannerProps> = ({ onDismiss, onExampl
         </li>
         <li className="flex items-center gap-2">
           <Heart className="w-4 h-4 shrink-0 text-primary" aria-hidden />
-          Tap ♥ to save events — find them anytime with the saved filter
+          {isMobile
+            ? 'Use the bottom bar: Discover, Saved, and Profile'
+            : 'Use the tabs: Discover, Saved, and Profile'}
         </li>
       </ul>
       <DiscoverySuggestions variant="onboarding" onSelect={onExampleSearch} />

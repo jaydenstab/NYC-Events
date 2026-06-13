@@ -178,11 +178,16 @@ class SqliteDatabase {
     const db = await this.init();
     const safeLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
     const safeOffset = Math.max(parseInt(offset, 10) || 0, 0);
-    const rows = await db.all('SELECT * FROM events ORDER BY date DESC LIMIT ? OFFSET ?', [
-      safeLimit,
-      safeOffset,
+    const today = new Date();
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const upcomingWhere = `date IS NULL OR date = '' OR date = 'TBD' OR date >= ?`;
+    const rows = await db.all(
+      `SELECT * FROM events WHERE ${upcomingWhere} ORDER BY date DESC LIMIT ? OFFSET ?`,
+      [todayIso, safeLimit, safeOffset]
+    );
+    const countRow = await db.get(`SELECT COUNT(*) AS count FROM events WHERE ${upcomingWhere}`, [
+      todayIso,
     ]);
-    const countRow = await db.get('SELECT COUNT(*) AS count FROM events');
     return {
       events: rows.map(rowToEvent).filter(Boolean),
       totalCount: countRow?.count ?? 0,

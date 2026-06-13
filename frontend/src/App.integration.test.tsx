@@ -32,6 +32,9 @@ vi.mock('@/components/NYC3DMap', () => ({
       setHighlightedId,
       fitBoundsToEvents,
       resize: vi.fn(),
+      zoomIn: vi.fn(),
+      zoomOut: vi.fn(),
+      resetNorth: vi.fn(),
     }));
     return <div data-testid="mock-map" />;
   }),
@@ -41,6 +44,7 @@ vi.mock('@/components/EventsPanel', () => ({
   default: React.forwardRef(function MockPanel(_props: unknown, ref: React.Ref<unknown>) {
     React.useImperativeHandle(ref, () => ({
       scrollToEventId: vi.fn(),
+      scrollToTop: vi.fn(),
       setSheetSnap: vi.fn(),
       focusSearch,
     }));
@@ -49,10 +53,6 @@ vi.mock('@/components/EventsPanel', () => ({
 }));
 
 vi.mock('@/components/EventModal', () => ({
-  default: () => null,
-}));
-
-vi.mock('@/components/MapSettings', () => ({
   default: () => null,
 }));
 
@@ -109,6 +109,16 @@ describe('App integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.history.replaceState({}, '', '/');
+  });
+
+  it('applies app theme class on shell', () => {
+    const { container } = render(
+      <NuqsAdapter>
+        <App />
+      </NuqsAdapter>
+    );
+    const shell = container.querySelector('.app-shell');
+    expect(shell?.className).toMatch(/app-theme-(dark|light)/);
   });
 
   it('focuses search when / is pressed outside inputs', () => {

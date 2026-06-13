@@ -14,10 +14,10 @@ const IngestBadge: React.FC<IngestBadgeProps> = ({ active, degradedSources = [] 
       <div
         role="status"
         aria-live="polite"
-        className="flex items-center gap-1 bg-orange-50 dark:bg-orange-950/40 px-2 py-0.5 rounded-[10px] border border-orange-200 dark:border-orange-800"
+        className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-[10px] border border-primary/30"
         title={title}
       >
-        <span className="text-[9px] font-bold text-orange-700 dark:text-orange-300 uppercase tracking-wide">
+        <span className="text-[9px] font-bold text-primary uppercase tracking-wide">
           Updating
         </span>
       </div>
@@ -30,10 +30,10 @@ const IngestBadge: React.FC<IngestBadgeProps> = ({ active, degradedSources = [] 
     <div
       role="status"
       aria-live="polite"
-      className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-[10px] border border-emerald-200 dark:border-emerald-800"
+      className="flex items-center gap-1 bg-status-success/10 px-2 py-0.5 rounded-[10px] border border-status-success/30"
     >
-      <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" aria-hidden />
-      <span className="text-[9px] font-bold text-emerald-800 dark:text-emerald-200 uppercase tracking-wide">
+      <div className="w-1.5 h-1.5 bg-status-success rounded-full animate-pulse" aria-hidden />
+      <span className="text-[9px] font-bold text-status-success uppercase tracking-wide">
         Live
       </span>
     </div>

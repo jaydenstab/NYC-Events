@@ -13,11 +13,21 @@ const EVENT_SOURCES = [
 interface SourcesPopoverProps {
   updatedLabel: string | null;
   degradedSources?: string[];
+  shownCount?: number;
+  catalogTotal?: number;
+  mapEventCount?: number;
+  listOnlyMode?: boolean;
+  dataSource?: 'live' | 'demo';
 }
 
 const SourcesPopover: React.FC<SourcesPopoverProps> = ({
   updatedLabel,
   degradedSources = [],
+  shownCount,
+  catalogTotal,
+  mapEventCount,
+  listOnlyMode = false,
+  dataSource = 'live',
 }) => {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -35,6 +45,17 @@ const SourcesPopover: React.FC<SourcesPopoverProps> = ({
 
   if (!updatedLabel) return null;
 
+  const showCatalogNote =
+    dataSource === 'live' &&
+    catalogTotal != null &&
+    shownCount != null &&
+    catalogTotal > shownCount;
+  const showMapNote =
+    !listOnlyMode &&
+    mapEventCount != null &&
+    shownCount != null &&
+    mapEventCount !== shownCount;
+
   return (
     <div className="relative inline" ref={rootRef}>
       <button
@@ -51,7 +72,7 @@ const SourcesPopover: React.FC<SourcesPopoverProps> = ({
         <div
           role="dialog"
           aria-label="Event sources"
-          className="absolute left-0 top-full mt-1 z-30 w-56 bg-card border border-border rounded-xl shadow-lg p-3 text-xs"
+          className="absolute left-0 top-full mt-1 z-30 w-56 bg-surface-elevated border border-border rounded-xl shadow-lg p-3 text-xs"
         >
           <p className="font-semibold text-foreground mb-2">What&apos;s included</p>
           <ul className="space-y-1 text-muted-foreground mb-2">
@@ -59,8 +80,18 @@ const SourcesPopover: React.FC<SourcesPopoverProps> = ({
               <li key={s}>{s}</li>
             ))}
           </ul>
+          {(showCatalogNote || showMapNote) && (
+            <div className="text-muted-foreground space-y-1 mb-2 pt-2 border-t border-border">
+              {showCatalogNote && (
+                <p>
+                  {catalogTotal} upcoming in catalog ({shownCount} shown)
+                </p>
+              )}
+              {showMapNote && <p>{mapEventCount} events on map</p>}
+            </div>
+          )}
           {degradedSources.length > 0 && (
-            <p className="text-amber-700 dark:text-amber-300">
+            <p className="text-status-warning text-xs">
               Updating: {degradedSources.join(', ')}
             </p>
           )}

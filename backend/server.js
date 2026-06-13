@@ -21,6 +21,7 @@ const metrics = require('./services/metrics');
 const { validateEnv } = require('./config/validateEnv');
 const { logger } = require('./logger');
 const { globalErrorHandler } = require('./utils/errorUtils');
+const { createCrawlerOgMiddleware } = require('./middleware/crawlerOgMeta');
 
 dotenv.config();
 validateEnv({ role: 'api' });
@@ -94,6 +95,15 @@ app.use('/api/og', ogRoutes);
 const frontendDistPath = path.join(__dirname, '../frontend/dist');
 const indexHtmlPath = path.join(frontendDistPath, 'index.html');
 const indexExists = fs.existsSync(indexHtmlPath);
+
+app.get('/event/:id', (req, res) => {
+  res.redirect(302, `/?event=${encodeURIComponent(req.params.id)}`);
+});
+
+if (indexExists) {
+  app.use(createCrawlerOgMiddleware({ indexHtmlPath, dbService, fs }));
+}
+
 app.use(express.static(frontendDistPath));
 
 const HEALTH_CACHE_TTL_MS = 5000;

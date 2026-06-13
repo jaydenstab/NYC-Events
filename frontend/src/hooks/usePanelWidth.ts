@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 const STORAGE_KEY = 'whatsupnyc_panel_width';
-const DEFAULT_WIDTH = 380;
+const DEFAULT_WIDTH = 400;
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 480;
 
@@ -38,7 +38,7 @@ export function usePanelWidth(enabled: boolean) {
 
   const onResizePointerMove = useCallback((e: React.PointerEvent) => {
     if (!draggingRef.current) return;
-    const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, e.clientX - 20));
+    const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, e.clientX));
     setWidth(next);
   }, []);
 

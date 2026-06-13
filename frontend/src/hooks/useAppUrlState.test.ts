@@ -48,6 +48,17 @@ describe('useAppUrlState', () => {
     expect(result.current.selectedTimeOfDay).toBe('evening');
   });
 
+  it('round-trips tab param', () => {
+    window.history.replaceState({}, '', '/?tab=saved');
+    const { result } = renderHook(() => useAppUrlState(), { wrapper });
+    expect(result.current.activeTab).toBe('saved');
+
+    act(() => {
+      result.current.setActiveTab('profile');
+    });
+    expect(result.current.activeTab).toBe('profile');
+  });
+
   it('clearAllFilters resets sort and borough', () => {
     window.history.replaceState({}, '', '/?sort=distance&borough=Queens&q=test&price=free&time=morning');
     const { result } = renderHook(() => useAppUrlState(), { wrapper });

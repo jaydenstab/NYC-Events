@@ -24,7 +24,7 @@ export function countActiveFilters(filters: FilterState): number {
 }
 
 const DATE_LABELS: Record<string, string> = {
-  today: 'today',
+  today: 'tonight',
   tomorrow: 'tomorrow',
   weekend: 'this weekend',
   week: 'this week',
@@ -80,6 +80,9 @@ export function buildEmptyStateMessage(
 
   if (filters.selectedDateRange !== 'all') {
     const when = DATE_LABELS[filters.selectedDateRange] || filters.selectedDateRange;
+    if (filters.selectedDateRange === 'today' && !q && !parts.length) {
+      return 'No events tonight — try This weekend or load more of the catalog.';
+    }
     if (parts.length) {
       return `No ${parts.join(' ')} events for ${when}. Try expanding your date range.`;
     }
@@ -94,10 +97,34 @@ export function buildEmptyStateMessage(
 }
 
 export function getDateRangeLabel(range: string): string {
+  if (range === 'today') return 'Tonight';
   if (range === 'weekend') return 'This weekend (Fri–Sun)';
   if (range === 'week') return 'This week';
   if (range === 'all') return 'All dates';
   return range.charAt(0).toUpperCase() + range.slice(1);
+}
+
+/** Compact title for filtered flat-list mode (not search-scoped). */
+export function buildFilteredListTitle(filters: FilterState, eventCount: number): string | null {
+  if (eventCount === 0) return null;
+  if (filters.searchQuery.trim().length >= 2) return null;
+
+  const parts: string[] = [];
+
+  if (filters.selectedDateRange !== 'all') {
+    parts.push(getDateRangeLabel(filters.selectedDateRange));
+  }
+  if (filters.selectedCategory !== 'all' && filters.selectedCategory !== 'saved') {
+    parts.push(filters.selectedCategory);
+  }
+  if (filters.selectedBorough !== 'all') {
+    parts.push(filters.selectedBorough);
+  }
+  if (filters.selectedPrice === 'free') parts.push('Free');
+  if (filters.selectedPrice === 'paid') parts.push('Paid');
+
+  const label = parts.length > 0 ? parts.join(' · ') : 'Filtered';
+  return `${label} · ${eventCount} ${eventCount === 1 ? 'event' : 'events'}`;
 }
 
 export const VALID_DATE_RANGES = ['all', 'today', 'tomorrow', 'weekend', 'week'] as const;

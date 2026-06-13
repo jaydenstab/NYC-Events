@@ -91,13 +91,24 @@ Services: **Postgres** (pgvector), **Redis**, **API** (`Dockerfile.api`), **Work
 | `API_KEYS` | Comma-separated keys — required for `GET /api/events` in production |
 | `METRICS_TOKEN` | Prometheus scrape auth for `GET /metrics` |
 | `MAPBOX_ACCESS_TOKEN` | Server-side geocoding |
+| `PUBLIC_SITE_URL` | Absolute site URL for OG meta tags (e.g. `https://app.example.com`) |
 
 Never set `SYNC_INGEST=true` in production.
 
-Run migrations: `cd backend && DATABASE_URL=... npm run migrate`  
+**Migrations** run automatically when the API starts (`dbService.init()` on Postgres). Manual run: `cd backend && DATABASE_URL=... npm run migrate`.
+
 Run worker separately: `cd backend && npm run worker`
 
-Frontend production builds must set `VITE_API_KEY` to one of the `API_KEYS` values.
+**Frontend Docker build** (`Dockerfile.api`) accepts build args:
+
+| Build arg | Purpose |
+|-----------|---------|
+| `VITE_API_KEY` | Must match one value in `API_KEYS` |
+| `VITE_MAPBOX_ACCESS_TOKEN` | Mapbox public token for the map |
+| `VITE_API_BASE_URL` | Optional; empty = same origin as API |
+
+Template: [backend/env.production.example](../backend/env.production.example).  
+**Railway deploy:** step-by-step [docs/DEPLOY_RAILWAY.md](DEPLOY_RAILWAY.md).
 
 ## Design decisions
 
@@ -112,6 +123,8 @@ Frontend production builds must set `VITE_API_KEY` to one of the `API_KEYS` valu
 ## Benchmarks
 
 After ingest, run `npm run bench:*` in `backend/`. Reports go to `backend/benchmarks/reports/` (generated locally, gitignored).
+
+Label search golden set: `npm run label:search-golden` → edit `benchmarks/fixtures/search-golden.json` → `npm run bench:search -- --strict`.
 
 ## Development
 

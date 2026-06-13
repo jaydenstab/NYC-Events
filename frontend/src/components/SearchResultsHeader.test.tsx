@@ -32,7 +32,7 @@ describe('SearchResultsHeader', () => {
         searchTotalCount={10}
       />
     );
-    expect(screen.getByText(/3 results for .jazz./i)).toBeInTheDocument();
+    expect(screen.getByText(/3 of 10 results for .jazz./i)).toBeInTheDocument();
   });
 
   it('shows catalog note when search active and catalog not fully loaded', () => {
@@ -46,5 +46,13 @@ describe('SearchResultsHeader', () => {
       />
     );
     expect(screen.getByText(/Search runs the full index/i)).toBeInTheDocument();
+  });
+
+  it('does not add horizontal padding on root container', () => {
+    const { container } = render(
+      <SearchResultsHeader searchQuery="jazz" eventsCount={3} sort="date" />
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.className).not.toMatch(/px-5/);
   });
 });

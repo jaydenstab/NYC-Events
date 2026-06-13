@@ -4,7 +4,7 @@ import { outboundLinkLabel } from '@/lib/eventLink';
 import { isPreciseLocation } from '@/lib/locationQuality';
 import { openDirections, openInMaps } from '@/lib/navigation';
 import { formatModalDate } from '@/lib/dateFormat';
-import { getCategoryIcon } from '@/lib/categoryIcons';
+import CategoryImagePlaceholder from './CategoryImagePlaceholder';
 import { shareEvent } from '@/lib/share';
 import { humanizeSource, getSourceUrl } from '@/lib/source';
 import EventActionMenu from './EventActionMenu';
@@ -95,7 +95,7 @@ const EventModal: React.FC<EventModalProps> = ({
           role="dialog"
           aria-modal="true"
           aria-labelledby="event-not-found-title"
-          className="bg-card rounded-3xl p-8 max-w-sm text-center shadow-2xl"
+          className="bg-surface-elevated rounded-3xl p-8 max-w-sm text-center shadow-2xl border border-border"
           onClick={(e) => e.stopPropagation()}
         >
           <h2 id="event-not-found-title" className="text-xl font-bold mb-2">
@@ -130,7 +130,6 @@ const EventModal: React.FC<EventModalProps> = ({
   if (!event) return null;
 
   const config = categoryConfig[event.category] || categoryConfig.other;
-  const Icon = getCategoryIcon(event.category);
   const showNeighborhoodBadge = event.locationQuality && !isPreciseLocation(event.locationQuality);
   const sourceUrl = event.source ? getSourceUrl(event.source) : null;
 
@@ -154,7 +153,7 @@ const EventModal: React.FC<EventModalProps> = ({
         aria-modal="true"
         aria-labelledby="event-modal-title"
         aria-describedby="event-modal-description"
-        className={`relative w-full max-h-[90vh] overflow-auto text-foreground bg-card backdrop-blur-xl shadow-2xl border border-border ${
+        className={`relative w-full max-h-[90vh] overflow-auto text-foreground bg-surface backdrop-blur-xl shadow-2xl border border-border ${
           isMobile
             ? 'rounded-t-[32px] px-5 pt-8 pb-28 max-w-full animate-slideUpMobile self-end'
             : 'rounded-[32px] p-10 max-w-[520px] max-h-[85vh] animate-slideUp'
@@ -198,14 +197,11 @@ const EventModal: React.FC<EventModalProps> = ({
             />
           </div>
         ) : (
-          <div
-            className={`rounded-2xl flex items-center justify-center shrink-0 mb-4 ${
-              isMobile ? 'w-16 h-16 mt-2' : 'w-20 h-20'
-            }`}
-            style={{ backgroundColor: `${config.color}22`, color: config.color }}
-          >
-            <Icon className={isMobile ? 'w-8 h-8' : 'w-10 h-10'} aria-hidden />
-          </div>
+          <CategoryImagePlaceholder
+            category={event.category}
+            eventId={event.id}
+            className={`mb-4 ${isMobile ? 'h-40 mt-2' : 'h-48'}`}
+          />
         )}
 
         <div className={`mb-6 ${!isMobile ? 'pl-0' : ''}`}>
@@ -240,7 +236,7 @@ const EventModal: React.FC<EventModalProps> = ({
           </div>
         </div>
 
-        <div className="mb-6 bg-muted/50 p-5 rounded-2xl space-y-3">
+        <div className="mb-6 bg-surface-elevated p-5 rounded-2xl space-y-3 border border-border">
           <p className="flex items-center gap-3 font-semibold text-base">
             <Calendar className="w-5 h-5 text-primary shrink-0" aria-hidden />
             {formatModalDate(event.date)}
@@ -252,7 +248,7 @@ const EventModal: React.FC<EventModalProps> = ({
             <div>
               {event.address}
               {showNeighborhoodBadge && (
-                <p className="text-[11px] text-amber-800 dark:text-amber-200 mt-1.5 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-1.5 rounded-lg font-medium flex items-start gap-1.5">
+                <p className="text-[11px] text-status-warning mt-1.5 bg-status-warning/10 px-2.5 py-1.5 rounded-lg font-medium flex items-start gap-1.5">
                   <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden />
                   Pin shows the neighborhood, not the exact venue address.
                 </p>
@@ -338,7 +334,7 @@ const EventModal: React.FC<EventModalProps> = ({
         )}
 
         {isMobile && (
-          <div className="fixed bottom-0 left-0 right-0 z-[2001] flex gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-card/95 backdrop-blur-xl border-t border-border">
+          <div className="fixed bottom-0 left-0 right-0 z-[2001] flex gap-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] bg-surface-elevated/95 backdrop-blur-xl border-t border-border">
             <button
               type="button"
               onClick={onToggleSave}

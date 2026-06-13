@@ -7,6 +7,7 @@ import type { Event } from '@/types/Event';
 vi.mock('@/services/api', () => ({
   loadEventsWithFallback: vi.fn(),
   fetchEvents: vi.fn(),
+  EVENTS_PER_PAGE: 100,
   EventsFetchError: class EventsFetchError extends Error {
     authError = false;
   },
@@ -31,11 +32,13 @@ describe('useEventsData', () => {
       events: [mockEvent('1')],
       meta: { totalCount: 200 },
       dataSource: 'live',
+      rawEventCount: 1,
     });
     vi.mocked(fetchEvents).mockResolvedValue({
       events: [mockEvent('2')],
       meta: { totalCount: 200 },
       dataSource: 'live',
+      rawEventCount: 1,
     });
   });
 
@@ -58,6 +61,7 @@ describe('useEventsData', () => {
       events: [mockEvent('2'), mockEvent('1')],
       meta: { totalCount: 200 },
       dataSource: 'live',
+      rawEventCount: 2,
     });
 
     const { result } = renderHook(() => useEventsData());
@@ -79,6 +83,7 @@ describe('useEventsData', () => {
       events: [],
       meta: { totalCount: 200 },
       dataSource: 'live',
+      rawEventCount: 0,
     });
 
     const { result } = renderHook(() => useEventsData());

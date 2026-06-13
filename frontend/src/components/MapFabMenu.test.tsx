@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, fireEvent } from '@testing-library/react';
 import MapFabMenu from './MapFabMenu';
 
 describe('MapFabMenu', () => {
@@ -11,11 +11,11 @@ describe('MapFabMenu', () => {
         eventCount={12}
         listOnlyMode={false}
         onBrowseEvents={vi.fn()}
-        onToggleSettings={vi.fn()}
+        onOpenProfile={vi.fn()}
         onToggleListOnly={vi.fn()}
       />
     );
-    expect(screen.getByTestId('map-fab-menu')).toBeInTheDocument();
+    expect(document.querySelector('[data-testid="map-fab-menu"]')).toBeTruthy();
   });
 
   it('opens menu and calls browse handler', () => {
@@ -27,7 +27,7 @@ describe('MapFabMenu', () => {
         eventCount={5}
         listOnlyMode={false}
         onBrowseEvents={onBrowseEvents}
-        onToggleSettings={vi.fn()}
+        onOpenProfile={vi.fn()}
         onToggleListOnly={vi.fn()}
       />
     );
@@ -44,7 +44,7 @@ describe('MapFabMenu', () => {
         eventCount={5}
         listOnlyMode={false}
         onBrowseEvents={vi.fn()}
-        onToggleSettings={vi.fn()}
+        onOpenProfile={vi.fn()}
         onToggleListOnly={vi.fn()}
       />
     );

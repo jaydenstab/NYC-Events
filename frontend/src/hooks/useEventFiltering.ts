@@ -55,9 +55,16 @@ export function useEventFiltering(
       let weekendFriIso = '';
       let weekendSunIso = '';
       if (selectedDateRange === 'weekend') {
+        const day = now.getDay();
         const fri = new Date(now);
-        const daysUntilFri = (5 - now.getDay() + 7) % 7;
-        fri.setDate(now.getDate() + daysUntilFri);
+        if (day === 0) {
+          fri.setDate(now.getDate() - 2);
+        } else if (day === 6) {
+          fri.setDate(now.getDate() - 1);
+        } else if (day !== 5) {
+          const daysUntilFri = (5 - day + 7) % 7;
+          fri.setDate(now.getDate() + daysUntilFri);
+        }
         const sun = new Date(fri);
         sun.setDate(fri.getDate() + 2);
         weekendFriIso = toLocalDateString(fri);

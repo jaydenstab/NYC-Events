@@ -96,19 +96,24 @@ describe('EventsPanel', () => {
 
   it('shows load more when hasMore and onLoadMore provided', () => {
     const onLoadMore = vi.fn();
-    renderPanel({ liveTotalCount: 100, hasMore: true, onLoadMore });
-    fireEvent.click(screen.getByText('Load more events'));
+    renderPanel({
+      liveTotalCount: 100,
+      hasMore: true,
+      onLoadMore,
+      selectedDateRange: 'today',
+    });
+    fireEvent.click(screen.getByRole('button', { name: /Load more/i }));
     expect(onLoadMore).toHaveBeenCalled();
   });
 
-  it('renders FilterSheet trigger on mobile', () => {
+  it('renders FilterSheet trigger in search bar', () => {
     renderPanel({ isMobile: true });
-    expect(screen.getAllByLabelText(/Filters/i).length).toBeGreaterThan(0);
+    expect(screen.getByLabelText(/^Filters/i)).toBeInTheDocument();
   });
 
   it('shows WhatsUpNYC brand title', () => {
     renderPanel();
-    expect(screen.getAllByText('WhatsUpNYC').length).toBeGreaterThan(0);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('WhatsUpNYC');
   });
 
   it('shows search input value from props', () => {
@@ -131,7 +136,7 @@ describe('EventsPanel', () => {
     expect(screen.getByText(/No comedy events found/i)).toBeInTheDocument();
   });
 
-  it('keeps filter chips in sticky zone outside scroll container', () => {
+  it('keeps filter chips in sticky zone outside scroll container when filters active', () => {
     const { container } = renderPanel({ searchQuery: 'jazz' });
     const stickyZone = container.querySelector('[data-testid="sticky-zone"]');
     const scroll = container.querySelector('[data-testid="panel-scroll"]');
@@ -143,5 +148,80 @@ describe('EventsPanel', () => {
         scroll &&
         stickyZone.compareDocumentPosition(scroll) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
+  });
+
+  it('shows sectioned browse feed in default discover mode', () => {
+    const today = new Date();
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    const todayIso = `${y}-${m}-${d}`;
+    renderPanel({
+      events: [{ ...sampleEvents[0], date: todayIso }],
+      selectedDateRange: 'all',
+      activeTab: 'discover',
+    });
+    expect(screen.getByRole('region', { name: /Tonight/i })).toBeInTheDocument();
+  });
+
+  it('does not show sticky sort control on discover tab', () => {
+    const { container } = renderPanel({ activeTab: 'discover' });
+    const stickyZone = container.querySelector('[data-testid="sticky-zone"]');
+    expect(stickyZone?.querySelector('#event-sort')).toBeNull();
+  });
+
+  it('aligns chip row with search inset', () => {
+    const { container } = renderPanel({ activeTab: 'discover' });
+    const search = container.querySelector('[data-testid="sticky-search"]');
+    const chipRow = container.querySelector('[data-testid="sticky-zone"] > .px-5');
+    expect(search?.className).toMatch(/px-5/);
+    expect(chipRow).toBeTruthy();
+  });
+
+  it('hides date shortcuts on saved tab', () => {
+    renderPanel({ activeTab: 'saved', selectedCategory: 'saved' });
+    expect(screen.queryByRole('button', { name: /Tonight/i })).not.toBeInTheDocument();
+  });
+
+  it('renders collapsed sidebar rail when not expanded on desktop', () => {
+    renderPanel({ isExpanded: false, isMobile: false });
+    expect(screen.getByLabelText('Collapsed sidebar')).toBeInTheDocument();
+    expect(screen.getByLabelText('Discover')).toBeInTheDocument();
+  });
+
+  it('expands panel when Saved is clicked from collapsed rail', () => {
+    const onToggleExpand = vi.fn();
+    const onTabChange = vi.fn();
+    renderPanel({
+      isExpanded: false,
+      isMobile: false,
+      onToggleExpand,
+      onTabChange,
+    });
+    fireEvent.click(screen.getByLabelText('Saved'));
+    expect(onToggleExpand).toHaveBeenCalled();
+    expect(onTabChange).toHaveBeenCalledWith('saved');
+  });
+
+  it('does not expand panel when Discover is clicked from collapsed rail', () => {
+    const onToggleExpand = vi.fn();
+    renderPanel({
+      isExpanded: false,
+      isMobile: false,
+      onToggleExpand,
+    });
+    fireEvent.click(screen.getByLabelText('Discover'));
+    expect(onToggleExpand).not.toHaveBeenCalled();
+  });
+
+  it('shows filtered list header when date filter is active', () => {
+    const today = new Date();
+    const todayIso = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    renderPanel({
+      events: [{ ...sampleEvents[0], date: todayIso }],
+      selectedDateRange: 'today',
+      activeTab: 'discover',
+    });
+    expect(screen.getByRole('heading', { level: 2, name: /Tonight · 1 event/i })).toBeInTheDocument();
   });
 });

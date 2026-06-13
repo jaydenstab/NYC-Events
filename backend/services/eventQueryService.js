@@ -147,7 +147,11 @@ async function getAggregatedEvents(options = {}) {
       meta: await buildResponseMeta({
         ingesting,
         totalCount: results.length,
-        extra: { hybridSearch: true },
+        extra: {
+          hybridSearch: true,
+          searchCapped: results.length >= limit,
+          searchLimit: limit,
+        },
       }),
     };
   }

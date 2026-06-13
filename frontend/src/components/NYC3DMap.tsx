@@ -14,17 +14,23 @@ import { motionDuration } from '@/lib/motion';
 import type { MapAppearance } from '@/hooks/useMapPreferences';
 import {
   appearanceToStyleUrl,
-  enable3DExtras,
   eventsToGeoJson,
   initEventLayers,
+  MAP_3D_PITCH,
+  removeEventSourceLayers,
+  setMap3DMode,
+  shouldClusterEvents,
 } from '@/lib/mapLayers';
-import { ensureEventPinImage } from '@/lib/mapPinImage';
+import { ensureEventPinImage, EVENT_PIN_IMAGE_ID } from '@/lib/mapPinImage';
 
 export interface NYC3DMapHandle {
   flyToEvent: (event: Event, opts?: { animate?: boolean }) => void;
   setHighlightedId: (id: string | null) => void;
   fitBoundsToEvents: (events: Event[]) => void;
   resize: () => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetNorth: () => void;
 }
 
 export interface NYC3DMapProps {
@@ -56,6 +62,7 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
   const lastFlownIdRef = useRef<string | null>(null);
   const pendingOpsRef = useRef<Array<() => void>>([]);
   const is3DRef = useRef(is3D);
+  const clusteredRef = useRef(true);
   const [mapError, setMapError] = useState<string | null>(null);
 
   is3DRef.current = is3D;
@@ -120,7 +127,7 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
       m.flyTo({
         center: [event.lng, event.lat],
         zoom: 12,
-        pitch: threeD ? 45 : 0,
+        pitch: threeD ? MAP_3D_PITCH : 0,
         bearing: -17.6,
         duration,
       });
@@ -128,7 +135,7 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
       m.flyTo({
         center: [event.lng, event.lat],
         zoom: 16,
-        pitch: threeD ? 45 : 0,
+        pitch: threeD ? MAP_3D_PITCH : 0,
         bearing: -17.6,
         duration,
       });
@@ -141,13 +148,50 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
     const m = map.current;
     if (!m || !m.isStyleLoaded() || evts.length === 0 || evts.length > 50) return;
 
+    const threeD = is3DRef.current;
+
+    if (evts.length === 1) {
+      const e = evts[0];
+      m.flyTo({
+        center: [e.lng, e.lat],
+        zoom: 15,
+        pitch: threeD ? MAP_3D_PITCH : 0,
+        bearing: -17.6,
+        duration: motionDuration(800),
+      });
+      return;
+    }
+
     const bounds = new mapboxgl.LngLatBounds();
     evts.forEach((e) => bounds.extend([e.lng, e.lat]));
-    m.fitBounds(bounds, { padding: 60, duration: motionDuration(800), maxZoom: 14 });
+    m.fitBounds(bounds, {
+      padding: 60,
+      duration: motionDuration(800),
+      maxZoom: 14,
+      minZoom: 10,
+    });
   };
 
   const resize = () => {
     map.current?.resize();
+  };
+
+  const zoomIn = () => {
+    map.current?.zoomIn({ duration: motionDuration(300) });
+  };
+
+  const zoomOut = () => {
+    map.current?.zoomOut({ duration: motionDuration(300) });
+  };
+
+  const resetNorth = () => {
+    const m = map.current;
+    if (!m) return;
+    m.easeTo({
+      bearing: -17.6,
+      pitch: is3DRef.current ? MAP_3D_PITCH : 0,
+      duration: motionDuration(500),
+    });
   };
 
   useImperativeHandle(ref, () => ({
@@ -155,19 +199,68 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
     setHighlightedId,
     fitBoundsToEvents,
     resize,
+    zoomIn,
+    zoomOut,
+    resetNorth,
   }));
 
-  const bootstrapEventLayers = (m: mapboxgl.Map, pitch: number, afterInit?: () => void) => {
+  const bootstrapEventLayers = (m: mapboxgl.Map, afterInit?: () => void) => {
+    const latestGeoJson = eventsToGeoJson(eventsRef.current);
     void ensureEventPinImage(m)
       .then(() => {
-        enable3DExtras(m, pitch);
-        initEventLayers(m, geojsonEvents, () => eventsRef.current, () => onEventSelectRef.current);
+        setMap3DMode(m, is3DRef.current, appearance);
+        initEventLayers(
+          m,
+          latestGeoJson,
+          () => eventsRef.current,
+          () => onEventSelectRef.current,
+          eventsRef.current.length
+        );
+        clusteredRef.current = shouldClusterEvents(eventsRef.current.length);
         afterInit?.();
+        flushPending();
       })
       .catch((err) => {
         console.error('Failed to load map markers:', err);
         setMapError('Could not load map markers. Refresh the page.');
       });
+  };
+
+  const syncEventSourceData = () => {
+    const m = map.current;
+    if (!m?.isStyleLoaded()) return false;
+    if (!m.hasImage(EVENT_PIN_IMAGE_ID)) return false;
+
+    const count = eventsRef.current.length;
+    const nextClustered = shouldClusterEvents(count);
+    const geoJson = eventsToGeoJson(eventsRef.current);
+
+    if (m.getSource('events-source') && nextClustered !== clusteredRef.current) {
+      clusteredRef.current = nextClustered;
+      const highlight = highlightedIdRef.current;
+      removeEventSourceLayers(m);
+      initEventLayers(
+        m,
+        geoJson,
+        () => eventsRef.current,
+        () => onEventSelectRef.current,
+        count
+      );
+      if (highlight) {
+        try {
+          m.setFeatureState({ source: 'events-source', id: highlight }, { selected: true });
+        } catch {
+          /* ignore */
+        }
+      }
+      return true;
+    }
+
+    const source = m.getSource('events-source') as mapboxgl.GeoJSONSource | undefined;
+    if (!source) return false;
+    source.setData(geoJson);
+    clusteredRef.current = nextClustered;
+    return true;
   };
 
   useEffect(() => {
@@ -180,7 +273,7 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
 
     try {
       mapboxgl.accessToken = mapboxToken;
-      const pitch = is3DRef.current ? 45 : 0;
+      const pitch = is3DRef.current ? MAP_3D_PITCH : 0;
       const m = new mapboxgl.Map({
         container: mapContainer.current,
         style: appearanceToStyleUrl(appearance),
@@ -194,9 +287,8 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
       map.current = m;
 
       m.on('load', () => {
-        bootstrapEventLayers(m, pitch);
+        bootstrapEventLayers(m);
 
-        m.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
         m.addControl(
           new mapboxgl.GeolocateControl({
             positionOptions: { enableHighAccuracy: true },
@@ -227,9 +319,14 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
 
   useEffect(() => {
     const m = map.current;
-    if (!m?.isStyleLoaded()) return;
-    const source = m.getSource('events-source') as mapboxgl.GeoJSONSource | undefined;
-    source?.setData(geojsonEvents);
+    if (!m) return;
+    if (!syncEventSourceData()) {
+      pendingOpsRef.current.push(() => {
+        syncEventSourceData();
+      });
+    }
+
+    if (!m.isStyleLoaded()) return;
 
     if (highlightedIdRef.current) {
       try {
@@ -253,11 +350,10 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
     prevAppearanceRef.current = appearance;
     const styleUrl = appearanceToStyleUrl(appearance);
     const prevHighlight = highlightedIdRef.current;
-    const pitch = is3DRef.current ? 45 : 0;
 
     m.setStyle(styleUrl);
     m.once('style.load', () => {
-      bootstrapEventLayers(m, pitch, () => {
+      bootstrapEventLayers(m, () => {
         if (prevHighlight) setHighlightedId(prevHighlight);
       });
     });
@@ -267,17 +363,14 @@ const NYC3DMap = forwardRef<NYC3DMapHandle, NYC3DMapProps>(function NYC3DMap(
   useEffect(() => {
     const m = map.current;
     if (!m?.isStyleLoaded()) return;
-    const pitch = is3D ? 45 : 0;
+    const pitch = is3D ? MAP_3D_PITCH : 0;
     m.easeTo({ pitch, duration: motionDuration(500) });
-    enable3DExtras(m, pitch);
-    if (m.getTerrain()) {
-      m.setTerrain({ source: 'mapbox-dem', exaggeration: is3D ? 1.4 : 0 });
-    }
-  }, [is3D]);
+    setMap3DMode(m, is3D, appearance);
+  }, [is3D, appearance]);
 
   return (
     <div
-      className={`map-root w-full h-full relative bg-[#1a1a1a] ${hidden ? 'hidden' : ''}`}
+      className={`map-root w-full h-full relative bg-surface ${hidden ? 'hidden' : ''}`}
       aria-hidden={hidden}
     >
       <div ref={mapContainer} className="w-full h-full" />

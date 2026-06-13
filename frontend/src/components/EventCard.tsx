@@ -85,8 +85,8 @@ const EventCard: React.FC<EventCardProps> = ({
     <article
       data-event-id={event.id}
       aria-current={isHighlighted ? 'true' : undefined}
-      className={`event-card group relative bg-card/80 hover:bg-card rounded-card p-4 mb-3 border-l-4 transition-all shadow-sm hover:shadow-md ${
-        isHighlighted ? 'event-card-highlighted ring-2 ring-primary/40 bg-card' : 'border-transparent hover:border-primary/20'
+      className={`event-card group relative bg-surface-elevated/80 hover:bg-surface-elevated rounded-card p-4 mb-3 border-l-4 transition-all shadow-sm hover:shadow-md ${
+        isHighlighted ? 'event-card-highlighted ring-2 ring-primary/40 bg-surface-elevated' : 'border-transparent hover:border-primary/20'
       }`}
       style={{ borderLeftColor: config.color }}
       onTouchStart={handleTouchStart}
@@ -148,7 +148,7 @@ const EventCard: React.FC<EventCardProps> = ({
                 </span>
               )}
               {isFree && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-status-success/10 text-status-success">
                   Free
                 </span>
               )}

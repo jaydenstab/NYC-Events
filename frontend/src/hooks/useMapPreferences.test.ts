@@ -1,33 +1,35 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useMapPreferences } from './useMapPreferences';
+import { useAppPreferences } from './useAppPreferences';
 
-const STORAGE_KEY = 'whatsupnyc_map_prefs';
+const STORAGE_KEY = 'whatsupnyc_app_prefs';
+const LEGACY_KEY = 'whatsupnyc_map_prefs';
 
-describe('useMapPreferences', () => {
+describe('useMapPreferences (compat re-export)', () => {
   beforeEach(() => {
     localStorage.clear();
   });
 
   it('loads defaults when storage is empty', () => {
-    const { result } = renderHook(() => useMapPreferences());
-    expect(result.current.appearance).toBe('light');
+    const { result } = renderHook(() => useAppPreferences());
+    expect(result.current.mapAppearance).toBe('light');
     expect(result.current.is3D).toBe(true);
   });
 
-  it('persists appearance to localStorage', () => {
-    const { result } = renderHook(() => useMapPreferences());
+  it('persists map appearance to localStorage', () => {
+    const { result } = renderHook(() => useAppPreferences());
 
     act(() => {
-      result.current.setAppearance('dark');
+      result.current.setMapAppearance('dark');
     });
 
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-    expect(stored).toEqual({ appearance: 'dark', is3D: true });
+    expect(stored.mapAppearance).toBe('dark');
+    expect(stored.is3D).toBe(true);
   });
 
   it('persists is3D preference', () => {
-    const { result } = renderHook(() => useMapPreferences());
+    const { result } = renderHook(() => useAppPreferences());
 
     act(() => {
       result.current.setIs3D(false);
@@ -40,35 +42,35 @@ describe('useMapPreferences', () => {
 
   it('migrates legacy satellite mapStyle', () => {
     localStorage.setItem(
-      STORAGE_KEY,
+      LEGACY_KEY,
       JSON.stringify({ mapStyle: 'satellite', lightPreset: 'day', is3D: true })
     );
-    const { result } = renderHook(() => useMapPreferences());
-    expect(result.current.appearance).toBe('satellite');
+    const { result } = renderHook(() => useAppPreferences());
+    expect(result.current.mapAppearance).toBe('satellite');
     expect(result.current.is3D).toBe(true);
   });
 
   it('migrates legacy dark mapStyle and night lighting', () => {
     localStorage.setItem(
-      STORAGE_KEY,
+      LEGACY_KEY,
       JSON.stringify({ mapStyle: 'streets', lightPreset: 'night' })
     );
-    const { result } = renderHook(() => useMapPreferences());
-    expect(result.current.appearance).toBe('dark');
+    const { result } = renderHook(() => useAppPreferences());
+    expect(result.current.mapAppearance).toBe('dark');
   });
 
   it('migrates legacy dawn/dusk to light', () => {
     localStorage.setItem(
-      STORAGE_KEY,
+      LEGACY_KEY,
       JSON.stringify({ mapStyle: 'streets', lightPreset: 'dusk' })
     );
-    const { result } = renderHook(() => useMapPreferences());
-    expect(result.current.appearance).toBe('light');
+    const { result } = renderHook(() => useAppPreferences());
+    expect(result.current.mapAppearance).toBe('light');
   });
 
-  it('rejects invalid appearance values', () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ appearance: 'neon' }));
-    const { result } = renderHook(() => useMapPreferences());
-    expect(result.current.appearance).toBe('light');
+  it('rejects invalid map appearance values', () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ mapAppearance: 'neon' }));
+    const { result } = renderHook(() => useAppPreferences());
+    expect(result.current.mapAppearance).toBe('light');
   });
 });

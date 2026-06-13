@@ -100,7 +100,7 @@ const EventActionMenu: React.FC<EventActionMenuProps> = ({
       {open && (
         <div
           role="menu"
-          className="absolute left-0 top-full mt-1 z-20 min-w-[200px] bg-card border border-border rounded-xl shadow-lg py-1"
+          className="absolute left-0 top-full mt-1 z-20 min-w-[200px] bg-surface-elevated border border-border rounded-xl shadow-lg py-1"
         >
           <button
             type="button"

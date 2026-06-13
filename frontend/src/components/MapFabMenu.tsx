@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Calendar, Settings, List, Map, X } from 'lucide-react';
-
-/** z-index: FAB 999, below settings dialog 1200 and event modal 2000 */
+import { Calendar, List, Map, User, X } from 'lucide-react';
 
 interface MapFabMenuProps {
   isMobile: boolean;
@@ -9,7 +7,7 @@ interface MapFabMenuProps {
   eventCount: number;
   listOnlyMode: boolean;
   onBrowseEvents: () => void;
-  onToggleSettings: () => void;
+  onOpenProfile: () => void;
   onToggleListOnly: () => void;
 }
 
@@ -19,7 +17,7 @@ const MapFabMenu: React.FC<MapFabMenuProps> = ({
   eventCount,
   listOnlyMode,
   onBrowseEvents,
-  onToggleSettings,
+  onOpenProfile,
   onToggleListOnly,
 }) => {
   const [open, setOpen] = useState(false);
@@ -49,11 +47,11 @@ const MapFabMenu: React.FC<MapFabMenuProps> = ({
       },
     },
     {
-      id: 'settings',
-      label: 'Map settings',
-      icon: Settings,
+      id: 'profile',
+      label: 'Preferences',
+      icon: User,
       onClick: () => {
-        onToggleSettings();
+        onOpenProfile();
         setOpen(false);
       },
     },
@@ -71,13 +69,13 @@ const MapFabMenu: React.FC<MapFabMenuProps> = ({
   return (
     <div
       ref={rootRef}
-      className="fixed bottom-[calc(1.25rem+env(safe-area-inset-bottom))] right-4 z-[999] flex flex-col items-end gap-2"
+      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 z-[999] flex flex-col items-end gap-2"
       data-testid="map-fab-menu"
     >
       {open && (
         <div
           role="menu"
-          className="bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl py-1 min-w-[200px] mb-1"
+          className="bg-surface-elevated/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl py-1 min-w-[200px] mb-1"
         >
           {menuItems.map((item) => (
             <button
@@ -85,7 +83,7 @@ const MapFabMenu: React.FC<MapFabMenuProps> = ({
               type="button"
               role="menuitem"
               onClick={item.onClick}
-              className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-muted flex items-center gap-2"
+              className="w-full text-left px-4 py-3 text-sm font-semibold hover:bg-muted flex items-center gap-2 text-foreground"
             >
               <item.icon className="w-4 h-4 shrink-0" aria-hidden />
               {item.label}

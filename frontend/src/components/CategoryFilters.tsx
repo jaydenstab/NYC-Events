@@ -18,7 +18,7 @@ function CategoryButton({
   isSelected: boolean;
   onClick: () => void;
 }) {
-  const config = categoryConfig[cat] || { color: '#007AFF', emoji: '📍' };
+  const config = categoryConfig[cat] || categoryConfig.other;
   const Icon = getCategoryIcon(cat);
 
   return (
@@ -30,7 +30,7 @@ function CategoryButton({
       className={`px-3 py-2 rounded-full border-none cursor-pointer text-[13px] font-semibold flex items-center gap-1.5 shrink-0 transition-all duration-300 ${
         isSelected
           ? 'text-white ring-2 ring-primary/40'
-          : 'bg-black/5 dark:bg-white/10 text-foreground'
+          : 'bg-muted/50 text-foreground'
       }`}
       style={
         isSelected
@@ -79,7 +79,7 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
   };
 
   return (
-    <div className="px-5 pb-4 shrink-0">
+    <div className="pb-4 shrink-0">
       {savedMode && (
         <p className="text-xs text-muted-foreground mb-2">Browsing saved events.</p>
       )}
@@ -108,14 +108,14 @@ const CategoryFilters: React.FC<CategoryFiltersProps> = ({
             className={`px-3 py-2 rounded-full border-none cursor-pointer text-[13px] font-semibold flex items-center gap-1 shrink-0 ${
               isMoreSelected
                 ? 'text-white bg-primary'
-                : 'bg-black/5 dark:bg-white/10 text-foreground'
+                : 'bg-muted/50 text-foreground'
             }`}
           >
             More
             <ChevronDown className={`w-3.5 h-3.5 transition-transform ${moreOpen ? 'rotate-180' : ''}`} />
           </button>
           {moreOpen && (
-            <div className="absolute top-full mt-2 right-0 z-50 min-w-[180px] p-2 rounded-xl bg-card border border-border shadow-xl flex flex-col gap-1">
+            <div className="absolute top-full mt-2 right-0 z-50 min-w-[180px] p-2 rounded-xl bg-surface-elevated border border-border shadow-xl flex flex-col gap-1">
               {MORE_CATEGORIES.map((cat) => (
                 <button
                   key={cat}

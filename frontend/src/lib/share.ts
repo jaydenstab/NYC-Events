@@ -1,8 +1,9 @@
 import type { Event } from '@/types/Event';
 
 export function buildEventShareUrl(eventId: string): string {
-  const url = new URL(window.location.href);
+  const url = new URL(window.location.origin + window.location.pathname);
   url.searchParams.set('event', eventId);
+  url.searchParams.set('utm_source', 'share');
   return url.toString();
 }
 
